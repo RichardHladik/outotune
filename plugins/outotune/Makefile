@@ -13,7 +13,8 @@ NAME = outotune
 # Files to build
 
 FILES_DSP = \
-	OutotunePlugin.cpp
+	OutotunePlugin.cpp \
+	PitchAubio.cpp
 
 FILES_UI = \
 	OutotuneUI.cpp
@@ -30,7 +31,7 @@ TARGETS += lv2_dsp
 TARGETS += vst
 TARGETS += jack
 
-BUILD_CXX_FLAGS += -laubio
+BUILD_CXX_FLAGS += -laubio -std=c++17
 
 all: $(TARGETS)
 
