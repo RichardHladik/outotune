@@ -1,11 +1,12 @@
 #include "DistrhoPlugin.hpp"
+#include <atomic>
 #include <aubio/aubio.h>
 #include <cmath>
 #include <iostream>
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
-	OutotunePlugin() : Plugin(0, 0, 0), silence_threshold(-70) {
+	OutotunePlugin() : Plugin(2, 0, 0), silence_threshold(-70) {
 		size_t frames = getBufferSize();
 		aubio_in = new_fvec(frames);
 		aubio_out = new_fvec(1);
@@ -30,19 +31,48 @@ private:
 		return d_cconst('O', 't', 'u', 'n');
 	}
 
-	void initParameter(uint32_t, Parameter &param) override {
-		param.hints = kParameterIsAutomable;
-		param.name = "Silence threshold";
-		param.symbol = "silence";
-		param.ranges.min = -120;
-		param.ranges.max = 0;
-		param.ranges.def = silence_threshold;
+	void initParameter(uint32_t index, Parameter &param) override {
+		switch (index) {
+		case 0:
+			param.hints = kParameterIsAutomable;
+			param.name = "Silence threshold";
+			param.symbol = "silence";
+			param.ranges.min = -120;
+			param.ranges.max = 0;
+			param.ranges.def = silence_threshold;
+			break;
+		case 1:
+			param.hints = kParameterIsAutomable | kParameterIsOutput;
+			param.name = "Pitch";
+			param.symbol = "pitch";
+			param.ranges.min = -1;
+			param.ranges.max = getSampleRate() / 2;
+			param.ranges.def = 0;
+			break;
+		default:
+			DISTRHO_SAFE_ASSERT(false);
+			break;
+		}
 	}
 
-	float getParameterValue(uint32_t) const override {
-		return silence_threshold;
+	float getParameterValue(uint32_t index) const override {
+		switch (index) {
+		case 0:
+			return silence_threshold;
+			break;
+		case 1:
+			return pitch_estimate;
+			break;
+		default:
+			DISTRHO_SAFE_ASSERT(false);
+			break;
+		}
+		return 0;
 	}
-	void setParameterValue(uint32_t, float val) override {
+
+	void setParameterValue(uint32_t index, float val) override {
+		if (index)
+			return;
 		silence_threshold = val;
 		aubio_pitch_set_silence(pitch, silence_threshold);
 	}
@@ -57,7 +87,8 @@ private:
 		}
 
 		aubio_pitch_do(pitch, aubio_in, aubio_out);
-		std::cout << frames << " " << aubio_out->data[0] << std::endl;
+		pitch_estimate = aubio_out->data[0];
+		std::cout << frames << " " << pitch_estimate << std::endl;
 	}
 
 private:
@@ -65,6 +96,7 @@ private:
 	fvec_t *aubio_in;
 	fvec_t *aubio_out;
 	aubio_pitch_t *pitch;
+	float pitch_estimate;
 };
 
 namespace DISTRHO {

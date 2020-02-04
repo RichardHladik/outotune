@@ -15,6 +15,9 @@ NAME = outotune
 FILES_DSP = \
 	OutotunePlugin.cpp
 
+FILES_UI = \
+	OutotuneUI.cpp
+
 # --------------------------------------------------------------
 # Do some magic
 
