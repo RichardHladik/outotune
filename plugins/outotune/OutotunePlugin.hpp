@@ -8,11 +8,17 @@ class OutotunePlugin : public DISTRHO::Plugin {
 public:
 	OutotunePlugin() : Plugin(2, 0, 0) {
 		size_t frames = getBufferSize();
-		internalFrames = 2 * frames;
+		internalFrames = 4096;
 		aubio_in = new_fvec(internalFrames);
-		aubio_out = new_fvec(1);
-		pitch = new_aubio_pitch("default", internalFrames, internalFrames, getSampleRate());
+		aubio_pitch = new_fvec(1);
+		aubio_out = new_fvec(frames);
+		auto rate = getSampleRate();
+
+		pitch = new_aubio_pitch("yinfast", internalFrames, frames, rate);
 		aubio_pitch_set_silence(pitch, silence_threshold);
+
+		wavetable = new_aubio_wavetable(rate, frames);
+		aubio_wavetable_play(wavetable);
 	}
 
 private:
@@ -65,11 +71,13 @@ private:
 	}
 
 	float getParameterValue(uint32_t index) const override {
+		auto hack = (OutotunePlugin *)this;
 		switch (index) {
 		case 0:
 			return silence_threshold;
 			break;
 		case 1:
+			hack->tick = !tick;
 			return (pitch_estimate == 0) ? -tick : pitch_estimate;
 			break;
 		case 2:
@@ -96,23 +104,33 @@ private:
 		for (uint32_t i=0; i < internalFrames - frames; i++)
 			aubio_in->data[i] = aubio_in->data[i + frames];
 
-		for (uint32_t i=0; i < frames; i++) {
-			out[i] = in[i];
+		for (uint32_t i=0; i < frames; i++)
 			aubio_in->data[i + internalFrames - frames] = in[i];
-		}
 
-		aubio_pitch_do(pitch, aubio_in, aubio_out);
-		pitch_estimate = aubio_out->data[0];
-		tick = !tick;
-//		std::cout << frames << " " << pitch_estimate << std::endl;
+		aubio_pitch_do(pitch, aubio_in, aubio_pitch);
+		confidence = aubio_pitch_get_confidence(pitch);
+		pitch_estimate = aubio_pitch->data[0];
+
+		if (pitch_estimate < 100 || pitch_estimate > 5000 || confidence < .6)
+			pitch_estimate = 0;
+
+		aubio_wavetable_set_amp(wavetable, confidence * .5);
+		aubio_wavetable_set_freq(wavetable, pitch_estimate);
+		aubio_wavetable_do(wavetable, NULL, aubio_out);
+		for (uint32_t i=0; i < frames; i++)
+			out[i] = aubio_out->data[i];
+
 	}
 
 private:
 	float silence_threshold = -50;
 	fvec_t *aubio_in;
+	fvec_t *aubio_pitch;
 	fvec_t *aubio_out;
 	aubio_pitch_t *pitch;
-	float pitch_estimate;
+	aubio_wavetable_t *wavetable;
+	float pitch_estimate = 0;
+	float confidence = 0;
 	bool tick = false;
 	size_t internalFrames;
 };
