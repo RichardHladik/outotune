@@ -3,3 +3,9 @@ Out-O'-Tune
 
 An opensource Autotune implementation leveraging the DISTRHO Plugin Framework.
 Work in progress.
+
+
+Dependencies
+------------
+
+aubio: for pitch analysis
