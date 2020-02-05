@@ -8,8 +8,8 @@ public:
 	virtual ~Scale() {}
 
 protected:
-	static constexpr float reference_semitones = 108.37631656229593;
-	// C above concert A
+	static constexpr float reference_semitones = 36.37631656229593;
+	// MIDI note 0, a C
 
 	static float freq_to_semitones(float f) {
 		if (f < 5)

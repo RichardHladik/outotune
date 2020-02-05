@@ -30,7 +30,7 @@ private:
 		if (remainder < 0)
 			remainder += 12;
 		float candidate1 = pitch_semi - remainder;
-		float candidate2 = pitch_semi - remainder;
+		float candidate2 = pitch_semi - remainder + 12;
 		return fabs(pitch_semi - candidate1) < fabs(pitch_semi - candidate2) ? candidate1 : candidate2;
 	}
 };
