@@ -5,10 +5,11 @@
 #include <aubio/aubio.h>
 
 #include "Pitch.hpp"
+#include "Scale.hpp"
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
-	OutotunePlugin() : Plugin(2, 0, 0) {
+	OutotunePlugin() : Plugin(3, 0, 0) {
 		size_t frames = getBufferSize();
 		internalFrames = 4096;
 
@@ -17,6 +18,7 @@ public:
 		wavetable = new_aubio_wavetable(rate, frames);
 		aubio_wavetable_play(wavetable);
 		estimator = createPitchEstimator(internalFrames, rate);
+		scale = createScale();
 	}
 
 private:
@@ -50,16 +52,16 @@ private:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
 			param.name = "Pitch";
 			param.symbol = "pitch";
-			param.ranges.min = -1;
 			param.ranges.max = getSampleRate() / 2;
+			param.ranges.min = -param.ranges.max;
 			param.ranges.def = 0;
 			break;
 		case 2:
-			param.hints = kParameterIsAutomable | kParameterIsOutput | kParameterIsBoolean;
-			param.name = "Tick";
-			param.symbol = "tick";
-			param.ranges.min = 0;
-			param.ranges.max = 1;
+			param.hints = kParameterIsAutomable | kParameterIsOutput;
+			param.name = "Corrected pitch";
+			param.symbol = "corrected";
+			param.ranges.max = getSampleRate() / 2;
+			param.ranges.min = -param.ranges.max;
 			param.ranges.def = 0;
 			break;
 		default:
@@ -76,10 +78,14 @@ private:
 			break;
 		case 1:
 			hack->tick = !tick;
-			return (pitch == 0) ? -tick : pitch;
+			if (!tick && pitch == 0)
+				return -INFINITY; // TODO: VERY ugly hack
+			return tick ? pitch : -pitch;
 			break;
 		case 2:
-			return tick;
+			if (!tick && corrected == 0)
+				return -INFINITY;
+			return tick ? corrected : -corrected;
 			break;
 		default:
 			DISTRHO_SAFE_ASSERT(false);
@@ -109,8 +115,10 @@ private:
 		if (pitch < 100 || pitch > 5000 || confidence < .6)
 			pitch = 0;
 
+		corrected = scale->nearest_tone(pitch);
+
 		aubio_wavetable_set_amp(wavetable, confidence * .5);
-		aubio_wavetable_set_freq(wavetable, pitch);
+		aubio_wavetable_set_freq(wavetable, corrected);
 		aubio_wavetable_do(wavetable, NULL, aubio_out);
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = aubio_out->data[i];
@@ -122,7 +130,9 @@ private:
 	fvec_t *aubio_out;
 	aubio_wavetable_t *wavetable;
 	std::unique_ptr<PitchEstimator> estimator;
+	std::unique_ptr<Scale> scale;
 	float pitch = 0;
+	float corrected = 0;
 	float confidence = 0;
 	bool tick = false;
 	size_t internalFrames;
