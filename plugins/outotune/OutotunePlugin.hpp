@@ -112,7 +112,7 @@ private:
 		pitch = estimator->estimate();
 		confidence = estimator->getConfidence();
 
-		if (pitch < 100 || pitch > 5000 || confidence < .6)
+		if (pitch < 50 || pitch > 5000 || confidence < .6)
 			pitch = 0;
 
 		corrected = scale->nearest_tone(pitch);
