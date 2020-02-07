@@ -6,11 +6,6 @@ public:
 	Scale() {}
 	virtual float nearest_tone(float) { return 0; }
 	virtual ~Scale() {}
-
-protected:
-	static constexpr float reference_semitones = 36.37631656229593;
-	// MIDI note 0, a C
-
 	static float freq_to_semitones(float f) {
 		if (f < 5)
 			return -INFINITY;
@@ -22,6 +17,10 @@ protected:
 			return 0;
 		return powf(2, (semi + reference_semitones) / 12);
 	}
+
+protected:
+	static constexpr float reference_semitones = 36.37631656229593;
+	// MIDI note 0, a C
 };
 
 extern std::unique_ptr<Scale> createScale();
