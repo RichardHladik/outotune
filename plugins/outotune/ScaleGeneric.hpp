@@ -4,6 +4,12 @@
 class GenericScale : public Scale {
 public:
 	GenericScale(std::vector<float> notes) : Scale(), notes(notes) {}
+	GenericScale(unsigned bitmask) : Scale() {
+		for (int i = 0; i < 12; i++)
+			if ((bitmask >> i) & 1)
+				notes.push_back(i);
+	}
+
 	float nearest_tone(float f) override {
 		if (f < 5)
 			return 0;
@@ -23,7 +29,7 @@ public:
 	}
 	~GenericScale() override {}
 private:
-	const std::vector<float> notes;
+	std::vector<float> notes;
 
 	static float closest_octave(float note, float pitch_semi) {
 		float remainder = fmodf(pitch_semi - note, 12);
