@@ -115,9 +115,6 @@ private:
 		if (npitch < 50 || npitch > 5000 || confidence < .6)
 			npitch = 0;
 
-		if (fabs(scale->freq_to_semitones(npitch) - 12 - scale->freq_to_semitones(pitch)) < .3)
-			npitch /= 2;
-
 		pitch = npitch;
 		corrected = scale->nearest_tone(pitch);
 
