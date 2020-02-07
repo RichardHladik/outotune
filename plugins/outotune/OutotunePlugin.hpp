@@ -109,12 +109,16 @@ private:
 		float* const out = outputs[0];
 		estimator->feed(in, frames);
 
-		pitch = estimator->estimate();
+		auto npitch = estimator->estimate();
 		confidence = estimator->getConfidence();
 
-		if (pitch < 50 || pitch > 5000 || confidence < .6)
-			pitch = 0;
+		if (npitch < 50 || npitch > 5000 || confidence < .6)
+			npitch = 0;
 
+		if (fabs(scale->freq_to_semitones(npitch) - 12 - scale->freq_to_semitones(pitch)) < .3)
+			npitch /= 2;
+
+		pitch = npitch;
 		corrected = scale->nearest_tone(pitch);
 
 		aubio_wavetable_set_amp(wavetable, confidence * .5);
