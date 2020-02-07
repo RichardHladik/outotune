@@ -15,7 +15,7 @@ NAME = outotune
 FILES_DSP = \
 	OutotunePlugin.cpp \
 	PitchAubio.cpp \
-	ScaleGeneric.cpp
+	ScaleChromatic.cpp
 
 FILES_UI = \
 	OutotuneUI.cpp
