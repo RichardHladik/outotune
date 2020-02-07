@@ -32,7 +32,7 @@ TARGETS += lv2_dsp
 TARGETS += vst
 TARGETS += jack
 
-BUILD_CXX_FLAGS += -laubio -std=c++17
+BUILD_CXX_FLAGS += -laubio -std=c++17 -lLibPyin
 
 all: $(TARGETS)
 
