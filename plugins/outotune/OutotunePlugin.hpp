@@ -2,6 +2,7 @@
 #include <atomic>
 #include <cmath>
 #include <iostream>
+#include <set>
 #include <aubio/aubio.h>
 
 #include "Pitch.hpp"
@@ -123,7 +124,7 @@ private:
 		//aubio_pitch_set_silence(pitch, silence_threshold);
 	}
 
-	void run(const float** inputs, float** outputs, uint32_t frames) override {
+	void run(const float** inputs, float** outputs, uint32_t frames, const MidiEvent *events, uint32_t eventCount) override {
 		// get the mono input and output
 		const float* const in  = inputs[0];
 		float* const out = outputs[0];
@@ -139,6 +140,28 @@ private:
 		nearest = pitch ? scale->nearest_tone(pitch) : 0;
 		corrected = pitch ? correction->calculate(pitch, nearest) : 0;
 		corrected = nearest;
+		for (size_t i = 0; i < eventCount; i++) {
+			auto e = events[i];
+			if (e.size != 3)
+				continue;
+			char type = e.data[0] >> 4;
+			const char NOTE_ON = 0x9;
+			const char NOTE_OFF = 0x8;
+			if (type != NOTE_ON && type != NOTE_OFF)
+				continue;
+			bool on = type == NOTE_ON;
+			int note = e.data[1];
+			if (on)
+				active_notes.insert(note);
+			else
+				active_notes.erase(note);
+			std::cout << (on ? "ON" : "OFF") << " " << note << "  " << active_notes.size() << std::endl;
+		}
+
+		if (active_notes.size()) {
+			auto semitone = *active_notes.begin();
+			corrected = Scale::semitones_to_freq(semitone);
+		}
 
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = 0;
@@ -167,6 +190,7 @@ private:
 	std::unique_ptr<Scale> scale;
 	std::unique_ptr<Correction> correction;
 	std::unique_ptr<PitchShifter> shifter;
+	std::set<int> active_notes;
 	float pitch = 0;
 	float nearest = 0;
 	float corrected = 0;
