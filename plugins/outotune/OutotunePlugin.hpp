@@ -6,12 +6,13 @@
 
 #include "Pitch.hpp"
 #include "Scale.hpp"
+#include "Correction.hpp"
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
-	OutotunePlugin() : Plugin(3, 0, 0) {
+	OutotunePlugin() : Plugin(4, 0, 0) {
 		size_t frames = getBufferSize();
-		internalFrames = 4096;
+		size_t internalFrames = 4096;
 
 		auto rate = getSampleRate();
 		aubio_out = new_fvec(frames);
@@ -19,6 +20,7 @@ public:
 		aubio_wavetable_play(wavetable);
 		estimator = createPitchEstimator(internalFrames, rate);
 		scale = createScale();
+		correction = createCorrection();
 	}
 
 private:
@@ -51,6 +53,7 @@ private:
 		case 1:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
 			param.name = "Pitch";
+			param.description = "Raw detected pitch";
 			param.symbol = "pitch";
 			param.ranges.max = getSampleRate() / 2;
 			param.ranges.min = -param.ranges.max;
@@ -58,7 +61,17 @@ private:
 			break;
 		case 2:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
-			param.name = "Corrected pitch";
+			param.name = "Nearest";
+			param.description = "Nearest pitch of the scale";
+			param.symbol = "nearest";
+			param.ranges.max = getSampleRate() / 2;
+			param.ranges.min = -param.ranges.max;
+			param.ranges.def = 0;
+			break;
+		case 3:
+			param.hints = kParameterIsAutomable | kParameterIsOutput;
+			param.name = "Corrected";
+			param.description = "Corrected pitch (usually somewhere between `pitch` and `nearest`";
 			param.symbol = "corrected";
 			param.ranges.max = getSampleRate() / 2;
 			param.ranges.min = -param.ranges.max;
@@ -83,6 +96,11 @@ private:
 			return tick ? pitch : -pitch;
 			break;
 		case 2:
+			if (!tick && nearest == 0)
+				return -INFINITY;
+			return tick ? nearest : -nearest;
+			break;
+		case 3:
 			if (!tick && corrected == 0)
 				return -INFINITY;
 			return tick ? corrected : -corrected;
@@ -110,16 +128,17 @@ private:
 		estimator->feed(in, frames);
 
 		auto npitch = estimator->estimate();
-		confidence = estimator->getConfidence();
+		auto confidence = estimator->getConfidence();
 
 		if (npitch < 50 || npitch > 5000 || confidence < .6)
 			npitch = 0;
 
 		pitch = npitch;
-		corrected = scale->nearest_tone(pitch);
+		nearest = scale->nearest_tone(pitch);
+		corrected = correction->calculate(pitch, nearest);
 
 		aubio_wavetable_set_amp(wavetable, confidence * .5);
-		aubio_wavetable_set_freq(wavetable, corrected);
+		aubio_wavetable_set_freq(wavetable, nearest);
 		aubio_wavetable_do(wavetable, NULL, aubio_out);
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = aubio_out->data[i];
@@ -132,11 +151,11 @@ private:
 	aubio_wavetable_t *wavetable;
 	std::unique_ptr<PitchEstimator> estimator;
 	std::unique_ptr<Scale> scale;
+	std::unique_ptr<Correction> correction;
 	float pitch = 0;
+	float nearest = 0;
 	float corrected = 0;
-	float confidence = 0;
 	bool tick = false;
-	size_t internalFrames;
 };
 
 namespace DISTRHO {

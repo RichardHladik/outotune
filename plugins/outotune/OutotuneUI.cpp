@@ -9,7 +9,7 @@ using DGL_NAMESPACE::Rectangle;
 
 class OutotuneUI : public DISTRHO::UI {
 public:
-	OutotuneUI() : UI(512, 512), pitchBuffer(BUFFER_SIZE), correctionBuffer(BUFFER_SIZE) {
+	OutotuneUI() : UI(512, 512), pitchBuffer(BUFFER_SIZE), correctionBuffer(BUFFER_SIZE), nearestBuffer(BUFFER_SIZE) {
 		setGeometryConstraints(128, 128, true);
 	}
 
@@ -27,12 +27,16 @@ private:
 		case 2:
 			feedBuffer(correctionBuffer, val);
 			break;
+		case 3:
+			feedBuffer(nearestBuffer, val);
+			break;
 		}
 	}
 
 	void onNanoDisplay() override {
 		drawBuffer(pitchBuffer, 255, 0, 0);
 		drawBuffer(correctionBuffer, 0, 255, 0);
+		drawBuffer(nearestBuffer, 0, 0, 255);
 	}
 
 	float normalize(float freq) {
@@ -78,6 +82,7 @@ private:
 	const size_t BUFFER_SIZE = 128;
 	std::vector<float> pitchBuffer;
 	std::vector<float> correctionBuffer;
+	std::vector<float> nearestBuffer;
 };
 
 UI* createUI() {
