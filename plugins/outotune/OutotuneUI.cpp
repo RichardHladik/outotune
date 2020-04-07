@@ -79,7 +79,7 @@ private:
 
 private:
 
-	const size_t BUFFER_SIZE = 128;
+	const size_t BUFFER_SIZE = 256;
 	std::vector<float> pitchBuffer;
 	std::vector<float> correctionBuffer;
 	std::vector<float> nearestBuffer;
