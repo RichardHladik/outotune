@@ -1,6 +1,26 @@
 #include <memory>
 #include <cmath>
 
+enum Tone {
+	C = 0,
+	Cis = 1,
+	Db = 1,
+	D = 2,
+	Dis = 3,
+	Eb = 3,
+	E = 4,
+	F = 5,
+	Fis = 6,
+	Gb = 6,
+	G = 7,
+	Gis = 8,
+	Ab = 8,
+	A = 9,
+	Ais = 10,
+	Bb = 10,
+	B = 11
+};
+
 class Scale {
 public:
 	Scale() {}

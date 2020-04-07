@@ -1,5 +1,5 @@
 #include <ScaleGeneric.hpp>
 
 std::unique_ptr<Scale> createScale() {
-	return std::make_unique<GenericScale>((std::vector<float>){0, 2, 5, 7, 10});
+	return std::make_unique<GenericScale>((std::vector<float>){Tone::Ab, Tone::Bb, Tone::C, Tone::D, Tone::Eb, Tone::F, Tone::G});
 }
