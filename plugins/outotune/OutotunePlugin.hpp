@@ -7,6 +7,7 @@
 #include "Pitch.hpp"
 #include "Scale.hpp"
 #include "Correction.hpp"
+#include "PitchShifting.hpp"
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
@@ -21,6 +22,7 @@ public:
 		estimator = createPitchEstimator(internalFrames, rate);
 		scale = createScale();
 		correction = createCorrection();
+		shifter = createPitchShifter(frames, rate);
 	}
 
 private:
@@ -134,11 +136,23 @@ private:
 			npitch = 0;
 
 		pitch = npitch;
-		nearest = scale->nearest_tone(pitch);
-		corrected = correction->calculate(pitch, nearest);
+		nearest = pitch ? scale->nearest_tone(pitch) : 0;
+		corrected = pitch ? correction->calculate(pitch, nearest) : 0;
+		corrected = nearest;
 
+		for (uint32_t i=0; i < frames; i++)
+			out[i] = 0;
+		float ratio = (pitch && corrected) ? corrected / pitch : 1;
+		shifter->feed(in, frames, out, ratio);
+		return;
+
+		if (!pitch) {
+			for (uint32_t i=0; i < frames; i++)
+				out[i] = 0;
+			return;
+		}
 		aubio_wavetable_set_amp(wavetable, confidence * .5);
-		aubio_wavetable_set_freq(wavetable, nearest);
+		aubio_wavetable_set_freq(wavetable, corrected);
 		aubio_wavetable_do(wavetable, NULL, aubio_out);
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = aubio_out->data[i];
@@ -152,6 +166,7 @@ private:
 	std::unique_ptr<PitchEstimator> estimator;
 	std::unique_ptr<Scale> scale;
 	std::unique_ptr<Correction> correction;
+	std::unique_ptr<PitchShifter> shifter;
 	float pitch = 0;
 	float nearest = 0;
 	float corrected = 0;
