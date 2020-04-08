@@ -6,7 +6,6 @@
 #include <set>
 #include <aubio/aubio.h>
 
-#undef NDEBUG
 #include "Pitch.hpp"
 #include "Scale.hpp"
 #include "Correction.hpp"

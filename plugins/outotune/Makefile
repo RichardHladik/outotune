@@ -4,6 +4,8 @@
 # Created by falkTX
 #
 
+DEBUG = true
+
 run: all
 	../../bin/outotune
 
