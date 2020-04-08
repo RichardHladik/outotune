@@ -6,6 +6,7 @@
 #include <set>
 #include <aubio/aubio.h>
 
+#include "Buffer.hpp"
 #include "Pitch.hpp"
 #include "Scale.hpp"
 #include "Correction.hpp"
@@ -25,6 +26,7 @@ public:
 		scale = createScale();
 		correction = createCorrection();
 		shifter = createPitchShifter(frames, rate);
+		buffer_in.resize(internalFrames / 2 + 4096);
 	}
 
 private:
@@ -129,6 +131,8 @@ private:
 		// get the mono input and output
 		const float* const in  = inputs[0];
 		float* const out = outputs[0];
+
+		buffer_shift(buffer_in, frames, in);
 		estimator->feed(in, frames);
 
 		auto npitch = estimator->estimate();
@@ -162,12 +166,16 @@ private:
 		if (active_notes.size()) {
 			auto semitone = *active_notes.begin();
 			corrected = Scale::semitones_to_freq(semitone);
-		}
+		}/* else {
+			corrected = 0;
+		} */
 
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = 0;
 		float ratio = (pitch && corrected) ? corrected / pitch : 1;
-		shifter->feed(in, frames, out, ratio);
+		shifter->feed(buffer_in.data() + 4096, frames, out, ratio);
+		/*for (uint32_t i=0; i < frames; i++)
+			out[i] += buffer_in[i + 4096 - 3 * 512]; */
 		return;
 
 		if (!pitch) {
@@ -192,6 +200,7 @@ private:
 	std::unique_ptr<Correction> correction;
 	std::unique_ptr<PitchShifter> shifter;
 	std::set<int> active_notes;
+	std::vector<float> buffer_in;
 	float pitch = 0;
 	float nearest = 0;
 	float corrected = 0;
