@@ -4,6 +4,12 @@
 # Created by falkTX
 #
 
+run: all
+	../../bin/outotune
+
+run-dbg: all
+	valgrind ../../bin/outotune
+
 # --------------------------------------------------------------
 # Project name, used for binaries
 
@@ -34,7 +40,7 @@ TARGETS += lv2_dsp
 TARGETS += vst
 TARGETS += jack
 
-BUILD_CXX_FLAGS += -laubio -std=c++17 -I ../../rubberband -lrubberband
+BUILD_CXX_FLAGS += -laubio -std=c++17 -I ../../rubberband -lrubberband -g
 
 all: $(TARGETS)
 
