@@ -174,16 +174,18 @@ private:
 		std::cout << nearest << " " << corrected << " " << pitch << std::endl;
 
 		for (uint32_t i=0; i < frames; i++)
-			out[i] = 0;
+			out[i] = in[i];
 		float ratio = (pitch && corrected) ? corrected / pitch : 1;
 		//shifter->feed(in, frames, out, ratio);
 		world->shift();
+		/*
 		size_t n = 64;
 		for (size_t i = 0; i < n; i++)
 			ola->feed(world->out().data() + 512 + i * frames / n, frames * 2 / n);
-		ola->pop(frames, out);
-/*		for (uint32_t i=0; i < frames; i++)
-			out[i] = world->out()[world->out().size() - frames + i]; */
+		ola->pop(frames, out); */
+		auto buf = world->out();
+		for (uint32_t i=0; i < frames; i++)
+			out[i] += 1 * buf[i];
 		gPitch = pitch, gNearest = nearest, gCorrected = corrected;
 		return;
 	}

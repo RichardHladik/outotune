@@ -13,12 +13,12 @@
 
 class World {
 public:
-	World(size_t _frameSize, float _rate) : frameSize(_frameSize), internalFrames(4 * std::max((size_t)2048, frameSize)), rate(_rate) {
+	World(size_t _frameSize, float _rate) : frameSize(_frameSize), internalFrames(3 * std::max((size_t)2048, frameSize)), rate(_rate) {
         InitializeDioOption(&f0option);
-		f0option.frame_period = 5.0;
+		f0option.frame_period = 5.805;
         f0option.speed = 1;
         f0option.f0_floor = 71.0;
-        f0option.allowed_range = 0.1;
+        f0option.allowed_range = 0.2;
         f0length = GetSamplesForDIO(rate, internalFrames, f0option.frame_period);
 		f0 = new double [f0length];
 		f0aux = new double [f0length];
@@ -27,9 +27,10 @@ public:
 		buffOut.resize((int)((f0length - 1) * f0option.frame_period / 1000.0 * rate) + 1);
 
         InitializeCheapTrickOption(rate, &envelopeOption);
-        envelopeOption.q1 = -0.15;
+        //envelopeOption.q1 = -0.15;
         envelopeOption.f0_floor = 71.0;
         envelopeSize = GetFFTSizeForCheapTrick(rate, &envelopeOption);
+		std::cout << envelopeSize << "\n";
         spectrogram = new double *[f0length];
         for (size_t i = 0; i < f0length; i++)
             spectrogram[i] = new double[envelopeSize / 2 + 1];
@@ -43,6 +44,8 @@ public:
 			for (size_t j = 0; j < envelopeSize / 2 + 1; j++)
 				noise[i][j] = 0;
 		}
+
+		InitializeSynthesizer(rate, f0option.frame_period, envelopeSize, frameSize, 50, &synthesizer);
 	}
 
 	double estimate(void) {
@@ -69,18 +72,37 @@ public:
 
 	void shift() {
 		estimateRest();
-	/*	for (size_t i = 0; i < f0length; i++)
-			f0[i] = f0[i] == 0 ? 0 : 150; */
-        Synthesis(f0, f0length, spectrogram, noise, envelopeSize, f0option.frame_period,
-                  rate, buffOut.size(), buffOut.data());
+		for (size_t i = 0; i < f0length; i++)
+			f0[i] = f0[i] == 0 ? 0 : f0[i] * 0.74915;
+		for (size_t i = 0; i < f0length; i++)  {
+			if (f0[i])
+				continue;
+			for (size_t j = 0; j < envelopeSize; j++)
+				spectrogram[i][j] *= .0001;
+		}
+		size_t cnt = frameSize >> 8;
+		size_t offset = f0length - cnt - 2;
+		std::cout << AddParameters(f0 + offset, cnt, spectrogram + offset, noise + offset, &synthesizer) << " ";
+		while (Synthesis2(&synthesizer)) {
+			std::cout << 'a';
+		}
+		std::cout << '\n';
+        //Synthesis(f0, f0length, spectrogram, noise, envelopeSize, f0option.frame_period,
+                  //rate, buffOut.size(), buffOut.data());
 	}
 
-	const std::vector<double> &out() const {
-		return buffOut;
+	const double *out() const {
+		return synthesizer.buffer;
 	}
 
 private:
+#include "World.hack.hpp"
 	void estimateRest() {
+		for (size_t i = 0; i < f0length; i++)  {
+			for (size_t j = 0; j < envelopeSize; j++)
+			//	spectrogram[i][j] = spectrohack[j],
+				noise[i][j] = noisehack[j];
+		}
         CheapTrick(buffIn.data(), internalFrames, rate, time, f0, f0length, &envelopeOption, spectrogram);
         //D4C(buffIn.data(), internalFrames, rate, time, f0, f0length, envelopeSize, &noiseOption, noise);
 	}
@@ -95,6 +117,7 @@ private:
 	double *f0, *f0aux, *time;
 	Buffer<double> buffIn, buffOut;
 	double **spectrogram, **noise;
+	WorldSynthesizer synthesizer;
 };
 
 class OLA {
