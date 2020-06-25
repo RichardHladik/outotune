@@ -11,6 +11,7 @@
 #include "Scale.hpp"
 #include "Correction.hpp"
 #include "PitchShifting.hpp"
+#include "World.cpp"
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
@@ -26,6 +27,8 @@ public:
 		scale = createScale();
 		correction = createCorrection();
 		shifter = createPitchShifter(frames, rate);
+		world = createWorld(frames, rate);
+		ola = std::make_unique<OLA>(1024);
 	}
 
 private:
@@ -96,19 +99,19 @@ private:
 			break;
 		case 1:
 			hack->tick = !tick;
-			if (!tick && pitch == 0)
+			if (!tick && gPitch == 0)
 				return -INFINITY; // TODO: VERY ugly hack
-			return tick ? pitch : -pitch;
+			return tick ? gPitch : -gPitch;
 			break;
 		case 2:
-			if (!tick && nearest == 0)
+			if (!tick && gNearest == 0)
 				return -INFINITY;
-			return tick ? nearest : -nearest;
+			return tick ? gNearest : -gNearest;
 			break;
 		case 3:
-			if (!tick && corrected == 0)
+			if (!tick && gCorrected == 0)
 				return -INFINITY;
-			return tick ? corrected : -corrected;
+			return tick ? gCorrected : -gCorrected;
 			break;
 		default:
 			DISTRHO_SAFE_ASSERT(false);
@@ -131,6 +134,7 @@ private:
 		const float* const in  = inputs[0];
 		float* const out = outputs[0];
 		estimator->feed(in, frames);
+		world->feed(in, frames);
 
 		auto npitch = estimator->estimate();
 		auto confidence = estimator->getConfidence();
@@ -138,9 +142,11 @@ private:
 		if (npitch < 50 || npitch > 5000 || confidence < .6)
 			npitch = 0;
 
+		float pitch = gPitch, nearest = gNearest, corrected = gCorrected;
 		pitch = npitch;
 		nearest = pitch ? scale->nearest_tone(pitch) : 0;
 		corrected = pitch ? correction->calculate(pitch, nearest) : 0;
+//		nearest = world->estimate();
 		corrected = nearest;
 		for (size_t i = 0; i < eventCount; i++) {
 			auto e = events[i];
@@ -164,24 +170,22 @@ private:
 			auto semitone = *active_notes.begin();
 			corrected = Scale::semitones_to_freq(semitone);
 		}
+		nearest = corrected = world->estimate();
+		std::cout << nearest << " " << corrected << " " << pitch << std::endl;
 
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = 0;
 		float ratio = (pitch && corrected) ? corrected / pitch : 1;
-		shifter->feed(in, frames, out, ratio);
+		//shifter->feed(in, frames, out, ratio);
+		world->shift();
+		size_t n = 64;
+		for (size_t i = 0; i < n; i++)
+			ola->feed(world->out().data() + 512 + i * frames / n, frames * 2 / n);
+		ola->pop(frames, out);
+/*		for (uint32_t i=0; i < frames; i++)
+			out[i] = world->out()[world->out().size() - frames + i]; */
+		gPitch = pitch, gNearest = nearest, gCorrected = corrected;
 		return;
-
-		if (!pitch) {
-			for (uint32_t i=0; i < frames; i++)
-				out[i] = 0;
-			return;
-		}
-		aubio_wavetable_set_amp(wavetable, confidence * .5);
-		aubio_wavetable_set_freq(wavetable, corrected);
-		aubio_wavetable_do(wavetable, NULL, aubio_out);
-		for (uint32_t i=0; i < frames; i++)
-			out[i] = aubio_out->data[i];
-
 	}
 
 private:
@@ -192,10 +196,12 @@ private:
 	std::unique_ptr<Scale> scale;
 	std::unique_ptr<Correction> correction;
 	std::unique_ptr<PitchShifter> shifter;
+	std::unique_ptr<World> world;
+	std::unique_ptr<OLA> ola;
 	std::set<int> active_notes;
-	float pitch = 0;
-	float nearest = 0;
-	float corrected = 0;
+	float gPitch = 0;
+	float gNearest = 0;
+	float gCorrected = 0;
 	bool tick = false;
 };
 

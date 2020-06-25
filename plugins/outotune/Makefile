@@ -40,8 +40,12 @@ TARGETS += lv2_dsp
 TARGETS += vst
 TARGETS += jack
 
-BUILD_CXX_FLAGS += -laubio -std=c++17 -I ../../rubberband -lrubberband -g
+BUILD_CXX_FLAGS += -laubio -std=c++17 -I ../../rubberband -lrubberband -L../../World/build -lworld -I ../../World/src -g
 
-all: $(TARGETS)
+all: ../../World/build/libworld.a $(TARGETS)
+../../World/build/libworld.a:
+	make -C ../../World
+
+.PHONY: ../../World/build/libworld.a
 
 # --------------------------------------------------------------

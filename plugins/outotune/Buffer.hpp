@@ -1,25 +1,25 @@
 #include <cassert>
 #include <vector>
 
-using Buffer = std::vector<float>;
+template<typename T> using Buffer = std::vector<T>;
 
-float *buffer_get_push_ptr(Buffer &b, size_t cnt) {
+template<typename T> T *buffer_get_push_ptr(Buffer<T> &b, size_t cnt) {
 	auto sz = b.size();
 	b.resize(b.size() + cnt);
 	return b.data() + sz;
 }
 
-void buffer_push(Buffer &b, size_t count, const float *more) {
+template<typename T, typename U> void buffer_push(Buffer<T> &b, size_t count, const U *more) {
 	auto *p = buffer_get_push_ptr(b, count);
 	for (size_t i = 0; i < count; i++)
-		*(p++) = more[i];
+		*(p++) = (T)more[i];
 }
 
-void buffer_push(Buffer &b, const std::vector<float> &more) {
+template<typename T> void buffer_push(Buffer<T> &b, const std::vector<T> &more) {
 	return buffer_push(b, more.size(), more.data());
 }
 
-void buffer_pop(Buffer &b, size_t count, float *out=nullptr) {
+template<typename T> void buffer_pop(Buffer<T> &b, size_t count, T *out=nullptr) {
 	assert(count <= b.size());
 	if (out)
 		for (size_t i = 0; i < count; i++)
@@ -30,7 +30,7 @@ void buffer_pop(Buffer &b, size_t count, float *out=nullptr) {
 	b.resize(b.size() - count);
 }
 
-void buffer_pad(Buffer &b, size_t size) {
+template<typename T> void buffer_pad(Buffer<T> &b, size_t size) {
 	if (b.size() >= size)
 		return;
 	auto sz = b.size();
@@ -39,4 +39,9 @@ void buffer_pad(Buffer &b, size_t size) {
 		b[i] = i % 8 < 4 ? .3 : -.3;
 /*	for (size_t i = 0; i < size - sz; i++)
 		b[sz + i] = b[i]; */
+}
+
+template<typename T, typename U> void buffer_exchange(Buffer<T> &b, size_t count, const U *more) {
+	buffer_pop(b, count, (T*)nullptr);
+	buffer_push(b, count, more);
 }
