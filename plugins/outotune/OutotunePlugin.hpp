@@ -28,7 +28,8 @@ public:
 		correction = createCorrection();
 		shifter = createPitchShifter(frames, rate);
 		world = createWorld(frames, rate);
-		ola = std::make_unique<OLA>(1024);
+		synth1 = std::make_unique<World::Synthesizer>(*world);
+		synth2 = std::make_unique<World::Synthesizer>(*world);
 	}
 
 private:
@@ -175,9 +176,12 @@ private:
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = 1 * in[i];
 		//shifter->feed(in, frames, out, ratio);
-		world->shiftTo(corrected);
+		synth1->shiftBy(.5);
 		for (uint32_t i=0; i < frames; i++)
-			out[i] += 1 * world->out()[i];
+			out[i] += .5 * synth1->out()[i];
+		synth2->shiftBy(2);
+		for (uint32_t i=0; i < frames; i++)
+			out[i] += 1.5 * synth2->out()[i];
 		gPitch = pitch, gNearest = nearest, gCorrected = corrected;
 		return;
 	}
@@ -191,7 +195,7 @@ private:
 	std::unique_ptr<Correction> correction;
 	std::unique_ptr<PitchShifter> shifter;
 	std::unique_ptr<World> world;
-	std::unique_ptr<OLA> ola;
+	std::unique_ptr<World::Synthesizer> synth1, synth2;
 	std::set<int> active_notes;
 	float gPitch = 0;
 	float gNearest = 0;

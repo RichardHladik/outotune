@@ -24,7 +24,6 @@ public:
 		f0aux = new double [f0length];
 		time = new double [f0length];
 		buffIn.resize(internalFrames);
-		buffOut.resize((int)((f0length - 1) * f0option.frame_period / 1000.0 * rate) + 1);
 
         InitializeCheapTrickOption(rate, &envelopeOption);
         //envelopeOption.q1 = -0.15;
@@ -45,7 +44,6 @@ public:
 				noise[i][j] = 0;
 		}
 
-		InitializeSynthesizer(rate, f0option.frame_period, envelopeSize, frameSize, 50, &synthesizer);
 		fragmentLength = 1 << 8;
 		fragmentCount = frameSize / fragmentLength;
 		offset = f0length - fragmentCount - 1;
@@ -73,26 +71,6 @@ public:
 		buffer_exchange(buffIn, frames, in);
 	}
 
-	void shiftBy(double scale) {
-		for (size_t i = 0; i < f0length; i++)
-			f0aux[i] = f0[i] * scale;
-		AddParameters(f0aux + offset, fragmentCount, spectrogram + offset, noise + offset, &synthesizer);
-		while (Synthesis2(&synthesizer))
-			;
-	}
-
-	void shiftTo(double freq) {
-		for (size_t i = 0; i < f0length; i++)
-			f0aux[i] = f0[i] == 0 ? 0 : freq;
-		AddParameters(f0aux + offset, fragmentCount, spectrogram + offset, noise + offset, &synthesizer);
-		while (Synthesis2(&synthesizer))
-			;
-	}
-
-	const double *out() const {
-		return synthesizer.buffer;
-	}
-
 	const double *orig() const {
 		return buffIn.data() + offset * fragmentLength;
 	}
@@ -100,8 +78,9 @@ public:
 private:
 #include "World.hack.hpp"
 	void estimateRest() {
+		std::cout << envelopeSize << std::endl;
 		for (size_t i = 0; i < f0length; i++)  {
-			for (size_t j = 0; j < envelopeSize; j++)
+			for (size_t j = 0; j < envelopeSize / 2 + 1; j++)
 			//	spectrogram[i][j] = spectrohack[j],
 				noise[i][j] = noisehack[j];
 		}
@@ -110,7 +89,7 @@ private:
 		for (size_t i = 0; i < f0length; i++)  {
 			if (f0[i])
 				continue;
-			for (size_t j = 0; j < envelopeSize; j++)
+			for (size_t j = 0; j < envelopeSize / 2 + 1; j++)
 				spectrogram[i][j] *= .0001;
 		}
 	}
@@ -123,39 +102,48 @@ private:
 	size_t envelopeSize;
 	size_t f0length;
 	double *f0, *f0aux, *time;
-	Buffer<double> buffIn, buffOut;
+	Buffer<double> buffIn;
 	double **spectrogram, **noise;
-	WorldSynthesizer synthesizer;
 	size_t fragmentLength;
 	size_t offset;
 	size_t fragmentCount;
-};
-
-class OLA {
 public:
-	OLA(size_t n) {
-		v.resize(n);
-	}
 
-	static double win(size_t frame, size_t shift, size_t i) {
-		i = std::min(i, frame - i);
-		return ((double)i) / shift;
-	}
+	class Synthesizer {
+	public:
+		Synthesizer(World &_world) : w(_world) {
+			InitializeSynthesizer(w.rate, w.f0option.frame_period, w.envelopeSize, w.frameSize, 50, &synthesizer);
+			f0 = new double[w.f0length];
+		}
+		~Synthesizer() {
+			delete f0;
+		}
+		void shiftBy(double scale) {
+			for (size_t i = 0; i < w.f0length; i++)
+				f0[i] = w.f0[i] * scale;
+			shift();
+		}
 
-	void feed(const double *in, size_t n) {
-		size_t inc = n / 2;
-		size_t start = v.size() - n + inc;
-		v.resize(v.size() + inc);
-		for (size_t i = 0; i < n; i++)
-			v[start + i] += in[i] * win(n, inc, i);
-	}
+		void shiftTo(double freq) {
+			for (size_t i = 0; i < w.f0length; i++)
+				f0[i] = w.f0[i] == 0 ? 0 : freq;
+			shift();
+		}
 
-	void pop(size_t count, float *out) {
-		buffer_pop(v, count, out);
-	}
+		const double *out() const {
+			return synthesizer.buffer;
+		}
+	private:
+		void shift() {
+			AddParameters(f0 + w.offset, w.fragmentCount, w.spectrogram + w.offset, w.noise + w.offset, &synthesizer);
+			while (Synthesis2(&synthesizer))
+				;
+		}
 
-private:
-	Buffer<float> v;
+		World &w;
+		double *f0;
+		WorldSynthesizer synthesizer;
+	};
 };
 
 std::unique_ptr<World> createWorld(size_t frameSize, float rate) {
