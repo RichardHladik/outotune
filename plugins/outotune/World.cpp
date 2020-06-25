@@ -46,6 +46,9 @@ public:
 		}
 
 		InitializeSynthesizer(rate, f0option.frame_period, envelopeSize, frameSize, 50, &synthesizer);
+		fragmentLength = 1 << 8;
+		fragmentCount = frameSize / fragmentLength;
+		offset = f0length - fragmentCount - 1;
 	}
 
 	double estimate(void) {
@@ -70,29 +73,28 @@ public:
 		buffer_exchange(buffIn, frames, in);
 	}
 
-	void shift() {
-		estimateRest();
+	void shiftBy(double scale) {
 		for (size_t i = 0; i < f0length; i++)
-			f0[i] = f0[i] == 0 ? 0 : f0[i] * 0.74915;
-		for (size_t i = 0; i < f0length; i++)  {
-			if (f0[i])
-				continue;
-			for (size_t j = 0; j < envelopeSize; j++)
-				spectrogram[i][j] *= .0001;
-		}
-		size_t cnt = frameSize >> 8;
-		size_t offset = f0length - cnt - 2;
-		std::cout << AddParameters(f0 + offset, cnt, spectrogram + offset, noise + offset, &synthesizer) << " ";
-		while (Synthesis2(&synthesizer)) {
-			std::cout << 'a';
-		}
-		std::cout << '\n';
-        //Synthesis(f0, f0length, spectrogram, noise, envelopeSize, f0option.frame_period,
-                  //rate, buffOut.size(), buffOut.data());
+			f0aux[i] = f0[i] * scale;
+		AddParameters(f0aux + offset, fragmentCount, spectrogram + offset, noise + offset, &synthesizer);
+		while (Synthesis2(&synthesizer))
+			;
+	}
+
+	void shiftTo(double freq) {
+		for (size_t i = 0; i < f0length; i++)
+			f0aux[i] = f0[i] == 0 ? 0 : freq;
+		AddParameters(f0aux + offset, fragmentCount, spectrogram + offset, noise + offset, &synthesizer);
+		while (Synthesis2(&synthesizer))
+			;
 	}
 
 	const double *out() const {
 		return synthesizer.buffer;
+	}
+
+	const double *orig() const {
+		return buffIn.data() + offset * fragmentLength;
 	}
 
 private:
@@ -105,6 +107,12 @@ private:
 		}
         CheapTrick(buffIn.data(), internalFrames, rate, time, f0, f0length, &envelopeOption, spectrogram);
         //D4C(buffIn.data(), internalFrames, rate, time, f0, f0length, envelopeSize, &noiseOption, noise);
+		for (size_t i = 0; i < f0length; i++)  {
+			if (f0[i])
+				continue;
+			for (size_t j = 0; j < envelopeSize; j++)
+				spectrogram[i][j] *= .0001;
+		}
 	}
 
 	size_t frameSize, internalFrames;
@@ -118,6 +126,9 @@ private:
 	Buffer<double> buffIn, buffOut;
 	double **spectrogram, **noise;
 	WorldSynthesizer synthesizer;
+	size_t fragmentLength;
+	size_t offset;
+	size_t fragmentCount;
 };
 
 class OLA {

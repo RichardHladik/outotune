@@ -133,20 +133,19 @@ private:
 		// get the mono input and output
 		const float* const in  = inputs[0];
 		float* const out = outputs[0];
-		estimator->feed(in, frames);
+		for (uint32_t i=0; i < frames; i++)
+			out[i] = 0;
 		world->feed(in, frames);
 
-		auto npitch = estimator->estimate();
-		auto confidence = estimator->getConfidence();
+		auto npitch = world->estimate();
 
-		if (npitch < 50 || npitch > 5000 || confidence < .6)
+		if (npitch < 50 || npitch > 5000)
 			npitch = 0;
 
 		float pitch = gPitch, nearest = gNearest, corrected = gCorrected;
 		pitch = npitch;
 		nearest = pitch ? scale->nearest_tone(pitch) : 0;
 		corrected = pitch ? correction->calculate(pitch, nearest) : 0;
-//		nearest = world->estimate();
 		corrected = nearest;
 		for (size_t i = 0; i < eventCount; i++) {
 			auto e = events[i];
@@ -170,22 +169,15 @@ private:
 			auto semitone = *active_notes.begin();
 			corrected = Scale::semitones_to_freq(semitone);
 		}
-		nearest = corrected = world->estimate();
 		std::cout << nearest << " " << corrected << " " << pitch << std::endl;
 
+		auto orig = world->orig();
 		for (uint32_t i=0; i < frames; i++)
-			out[i] = in[i];
-		float ratio = (pitch && corrected) ? corrected / pitch : 1;
+			out[i] = 1 * in[i];
 		//shifter->feed(in, frames, out, ratio);
-		world->shift();
-		/*
-		size_t n = 64;
-		for (size_t i = 0; i < n; i++)
-			ola->feed(world->out().data() + 512 + i * frames / n, frames * 2 / n);
-		ola->pop(frames, out); */
-		auto buf = world->out();
+		world->shiftTo(corrected);
 		for (uint32_t i=0; i < frames; i++)
-			out[i] += 1 * buf[i];
+			out[i] += 1 * world->out()[i];
 		gPitch = pitch, gNearest = nearest, gCorrected = corrected;
 		return;
 	}
