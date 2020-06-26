@@ -1,5 +1,7 @@
 #include <memory>
 #include <cmath>
+#ifndef OUTOTUNE_SCALE_H
+#define OUTOTUNE_SCALE_H
 
 enum Tone {
 	C = 0,
@@ -38,9 +40,18 @@ public:
 		return powf(2, (semi + reference_semitones) / 12);
 	}
 
+	static float semitones_to_ratio(float semi) {
+		return powf(2, semi / 12);
+	}
+
+	static float ratio_to_semitones(float f) {
+		return 12 * log2(f);
+	}
+
 protected:
 	static constexpr float reference_semitones = 36.37631656229593;
 	// MIDI note 0, a C
 };
 
 extern std::unique_ptr<Scale> createScale();
+#endif
