@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <set>
+#include <map>
 #include <aubio/aubio.h>
 
 #undef NDEBUG
@@ -130,6 +131,11 @@ private:
 		//aubio_pitch_set_silence(pitch, silence_threshold);
 	}
 
+	void addWeighted(size_t frames, float *out, float weight, const double *in) {
+		for (size_t i=0; i < frames; i++)
+			out[i] += weight * in[i];
+	}
+
 	void run(const float** inputs, float** outputs, uint32_t frames, const MidiEvent *events, uint32_t eventCount) override {
 		// get the mono input and output
 		const float* const in  = inputs[0];
@@ -159,29 +165,26 @@ private:
 				continue;
 			bool on = type == NOTE_ON;
 			int note = e.data[1];
-			if (on)
-				active_notes.insert(note);
+			if (on && !active_notes.count(note))
+				active_notes.emplace(note, std::make_unique<World::Synthesizer>(*world));
 			else
 				active_notes.erase(note);
 			std::cout << (on ? "ON" : "OFF") << " " << note << "  " << active_notes.size() << std::endl;
 		}
 
 		if (active_notes.size()) {
-			auto semitone = *active_notes.begin();
+			auto semitone = active_notes.begin()->first;
 			corrected = Scale::semitones_to_freq(semitone);
 		}
-		std::cout << nearest << " " << corrected << " " << pitch << std::endl;
 
-		auto orig = world->orig();
-		for (uint32_t i=0; i < frames; i++)
-			out[i] = 1 * in[i];
-		//shifter->feed(in, frames, out, ratio);
-		synth1->shiftBy(.5);
-		for (uint32_t i=0; i < frames; i++)
-			out[i] += .5 * synth1->out()[i];
-		synth2->shiftBy(2);
-		for (uint32_t i=0; i < frames; i++)
-			out[i] += 1.5 * synth2->out()[i];
+		addWeighted(frames, out, 1, world->orig());
+		/*addWeighted(frames, out, .5, synth1->shiftBy(-12));
+		addWeighted(frames, out, 1.5, synth2->shiftBy(12)); */
+		for (auto &&a : active_notes) {
+			// addWeighted(frames, out, .5, a.second->shiftToNote(a.first));
+			addWeighted(frames, out, 1, a.second->shiftBy(a.first - 60));
+		}
+
 		gPitch = pitch, gNearest = nearest, gCorrected = corrected;
 		return;
 	}
@@ -196,7 +199,7 @@ private:
 	std::unique_ptr<PitchShifter> shifter;
 	std::unique_ptr<World> world;
 	std::unique_ptr<World::Synthesizer> synth1, synth2;
-	std::set<int> active_notes;
+	std::map<int, std::unique_ptr<World::Synthesizer>> active_notes;
 	float gPitch = 0;
 	float gNearest = 0;
 	float gCorrected = 0;

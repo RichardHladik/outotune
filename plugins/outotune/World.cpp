@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string.h>
 #include "Buffer.hpp"
+#include "Scale.hpp"
 #include "world/d4c.h"
 #include "world/dio.h"
 #include "world/matlabfunctions.h"
@@ -29,7 +30,6 @@ public:
         //envelopeOption.q1 = -0.15;
         envelopeOption.f0_floor = 71.0;
         envelopeSize = GetFFTSizeForCheapTrick(rate, &envelopeOption);
-		std::cout << envelopeSize << "\n";
         spectrogram = new double *[f0length];
         for (size_t i = 0; i < f0length; i++)
             spectrogram[i] = new double[envelopeSize / 2 + 1];
@@ -78,7 +78,6 @@ public:
 private:
 #include "World.hack.hpp"
 	void estimateRest() {
-		std::cout << envelopeSize << std::endl;
 		for (size_t i = 0; i < f0length; i++)  {
 			for (size_t j = 0; j < envelopeSize / 2 + 1; j++)
 			//	spectrogram[i][j] = spectrohack[j],
@@ -118,26 +117,35 @@ public:
 		~Synthesizer() {
 			delete f0;
 		}
-		void shiftBy(double scale) {
+		Synthesizer(Synthesizer &) = delete;
+		Synthesizer operator=(Synthesizer &) = delete;
+
+		const double *shiftBy(double semitones) {
+			double scale = Scale::semitones_to_ratio(semitones);
 			for (size_t i = 0; i < w.f0length; i++)
 				f0[i] = w.f0[i] * scale;
-			shift();
+			return shift();
 		}
 
-		void shiftTo(double freq) {
+		const double *shiftToFreq(double freq) {
 			for (size_t i = 0; i < w.f0length; i++)
 				f0[i] = w.f0[i] == 0 ? 0 : freq;
-			shift();
+			return shift();
 		}
 
-		const double *out() const {
+		const double *shiftToNote(double semitones) {
+			return shiftToFreq(Scale::semitones_to_freq(semitones));
+		}
+
+		const double *out() {
 			return synthesizer.buffer;
 		}
 	private:
-		void shift() {
+		const double *shift() {
 			AddParameters(f0 + w.offset, w.fragmentCount, w.spectrogram + w.offset, w.noise + w.offset, &synthesizer);
 			while (Synthesis2(&synthesizer))
 				;
+			return out();
 		}
 
 		World &w;
