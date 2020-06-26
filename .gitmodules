@@ -6,4 +6,4 @@
 	url = https://github.com/breakfastquay/rubberband
 [submodule "World"]
 	path = World
-	url = https://github.com/mmorise/World
+	url = https://github.com/RichardHladik/World
