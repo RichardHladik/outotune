@@ -8,29 +8,19 @@
 #include <aubio/aubio.h>
 
 #undef NDEBUG
-#include "Pitch.hpp"
 #include "Scale.hpp"
 #include "Correction.hpp"
-#include "PitchShifting.hpp"
 #include "World.cpp"
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
 	OutotunePlugin() : Plugin(4, 0, 0) {
 		size_t frames = getBufferSize();
-		size_t internalFrames = 4096;
 
 		auto rate = getSampleRate();
-		aubio_out = new_fvec(frames);
-		wavetable = new_aubio_wavetable(rate, frames);
-		aubio_wavetable_play(wavetable);
-		estimator = createPitchEstimator(internalFrames, rate);
 		scale = createScale();
 		correction = createCorrection();
-		shifter = createPitchShifter(frames, rate);
 		world = createWorld(frames, rate);
-		synth1 = std::make_unique<World::Synthesizer>(*world);
-		synth2 = std::make_unique<World::Synthesizer>(*world);
 	}
 
 private:
@@ -58,7 +48,7 @@ private:
 			param.symbol = "silence";
 			param.ranges.min = -120;
 			param.ranges.max = 0;
-			param.ranges.def = silence_threshold;
+			param.ranges.def = 0;
 			break;
 		case 1:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
@@ -97,7 +87,7 @@ private:
 		auto hack = (OutotunePlugin *)this;
 		switch (index) {
 		case 0:
-			return silence_threshold;
+			return 0;
 			break;
 		case 1:
 			hack->tick = !tick;
@@ -122,13 +112,10 @@ private:
 		return 0;
 	}
 
-	void setParameterValue(uint32_t index, float val) override {
-		if (index)
-			return;
-		silence_threshold = val;
+	//void setParameterValue(uint32_t index, float val) override {
+	void setParameterValue(uint32_t, float) override {
+		return;
 		DISTRHO_SAFE_ASSERT(false);
-		// TODO
-		//aubio_pitch_set_silence(pitch, silence_threshold);
 	}
 
 	void addWeighted(size_t frames, float *out, float weight, const double *in) {
@@ -145,9 +132,6 @@ private:
 		world->feed(in, frames);
 
 		auto npitch = world->estimate();
-
-		if (npitch < 50 || npitch > 5000)
-			npitch = 0;
 
 		float pitch = gPitch, nearest = gNearest, corrected = gCorrected;
 		pitch = npitch;
@@ -190,15 +174,9 @@ private:
 	}
 
 private:
-	float silence_threshold = -50;
-	fvec_t *aubio_out;
-	aubio_wavetable_t *wavetable;
-	std::unique_ptr<PitchEstimator> estimator;
 	std::unique_ptr<Scale> scale;
 	std::unique_ptr<Correction> correction;
-	std::unique_ptr<PitchShifter> shifter;
 	std::unique_ptr<World> world;
-	std::unique_ptr<World::Synthesizer> synth1, synth2;
 	std::map<int, std::unique_ptr<World::Synthesizer>> active_notes;
 	float gPitch = 0;
 	float gNearest = 0;

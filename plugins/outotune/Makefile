@@ -20,10 +20,9 @@ NAME = outotune
 
 FILES_DSP = \
 	OutotunePlugin.cpp \
-	PitchAubio.cpp \
 	ScaleGeneric.cpp \
 	CorrectionClamp.cpp \
-	PitchShiftingRubberband.cpp
+
 
 FILES_UI = \
 	OutotuneUI.cpp
