@@ -8,13 +8,14 @@
 #include <aubio/aubio.h>
 
 #undef NDEBUG
+#include "Constants.hpp"
 #include "Scale.hpp"
 #include "Correction.hpp"
 #include "World.cpp"
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
-	OutotunePlugin() : Plugin(4, 0, 0) {
+	OutotunePlugin() : Plugin(DISTRHO_PLUGIN_NUM_PARAMETERS, 0, 0) {
 		size_t frames = getBufferSize();
 
 		auto rate = getSampleRate();
@@ -43,38 +44,30 @@ private:
 	void initParameter(uint32_t index, Parameter &param) override {
 		switch (index) {
 		case 0:
-			param.hints = kParameterIsAutomable;
-			param.name = "Silence threshold";
-			param.symbol = "silence";
-			param.ranges.min = -120;
-			param.ranges.max = 0;
-			param.ranges.def = 0;
-			break;
-		case 1:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
 			param.name = "Pitch";
 			param.description = "Raw detected pitch";
 			param.symbol = "pitch";
 			param.ranges.max = getSampleRate() / 2;
-			param.ranges.min = -param.ranges.max;
+			param.ranges.min = 0;
 			param.ranges.def = 0;
 			break;
-		case 2:
+		case 1:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
 			param.name = "Nearest";
 			param.description = "Nearest pitch of the scale";
 			param.symbol = "nearest";
 			param.ranges.max = getSampleRate() / 2;
-			param.ranges.min = -param.ranges.max;
+			param.ranges.min = 0;
 			param.ranges.def = 0;
 			break;
-		case 3:
+		case 2:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
 			param.name = "Corrected";
 			param.description = "Corrected pitch (usually somewhere between `pitch` and `nearest`";
 			param.symbol = "corrected";
 			param.ranges.max = getSampleRate() / 2;
-			param.ranges.min = -param.ranges.max;
+			param.ranges.min = 0;
 			param.ranges.def = 0;
 			break;
 		default:
@@ -84,27 +77,13 @@ private:
 	}
 
 	float getParameterValue(uint32_t index) const override {
-		auto hack = (OutotunePlugin *)this;
 		switch (index) {
 		case 0:
-			return 0;
-			break;
+			return gPitch;
 		case 1:
-			hack->tick = !tick;
-			if (!tick && gPitch == 0)
-				return -INFINITY; // TODO: VERY ugly hack
-			return tick ? gPitch : -gPitch;
-			break;
+			return gNearest;
 		case 2:
-			if (!tick && gNearest == 0)
-				return -INFINITY;
-			return tick ? gNearest : -gNearest;
-			break;
-		case 3:
-			if (!tick && gCorrected == 0)
-				return -INFINITY;
-			return tick ? gCorrected : -gCorrected;
-			break;
+			return gCorrected;
 		default:
 			DISTRHO_SAFE_ASSERT(false);
 			break;
@@ -181,7 +160,6 @@ private:
 	float gPitch = 0;
 	float gNearest = 0;
 	float gCorrected = 0;
-	bool tick = false;
 };
 
 namespace DISTRHO {
