@@ -5,7 +5,6 @@
 #include <iostream>
 #include <set>
 #include <map>
-#include <aubio/aubio.h>
 
 #undef NDEBUG
 #include "Constants.hpp"

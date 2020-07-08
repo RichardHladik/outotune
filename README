@@ -9,10 +9,8 @@ Dependencies
 ------------
 
 jack: for the standalone JACK application
-aubio: for pitch analysis
-rubberband:  for pitch stretching
 
- for example   on Debian, install libjack-dev libaubio-dev librubberband-dev
+ for example   on Debian, install libjack-dev
 
 
 Building and running

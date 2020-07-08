@@ -1,9 +1,6 @@
 [submodule "dpf"]
 	path = dpf
 	url = https://github.com/DISTRHO/DPF
-[submodule "rubberband"]
-	path = rubberband
-	url = https://github.com/breakfastquay/rubberband
 [submodule "World"]
 	path = World
 	url = https://github.com/RichardHladik/World
