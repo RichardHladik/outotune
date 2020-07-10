@@ -109,6 +109,8 @@ private:
 		// get the mono input and output
 		const float* const in  = inputs[0];
 		float* const out = outputs[0];
+		if (frames != world->frameSize)
+			world = createWorld(frames, world->rate);
 
 		// we need to feed the input to world first, since the host can reuse
 		// the input buffer for output and zeroing output would also zero input
