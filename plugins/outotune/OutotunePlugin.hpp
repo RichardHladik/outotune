@@ -109,9 +109,12 @@ private:
 		// get the mono input and output
 		const float* const in  = inputs[0];
 		float* const out = outputs[0];
+
+		// we need to feed the input to world first, since the host can reuse
+		// the input buffer for output and zeroing output would also zero input
+		world->feed(in, frames);
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = 0;
-		world->feed(in, frames);
 
 		auto npitch = world->estimate();
 
