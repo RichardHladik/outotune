@@ -70,6 +70,23 @@ private:
 			param.ranges.min = 0;
 			param.ranges.def = 0;
 			break;
+		case 3:
+			param.hints = kParameterIsInteger;
+			param.name = "MIDI mode";
+			param.symbol = "midi_mode";
+			param.description = "How should the MIDI input be interpreted";
+			{
+				ParameterEnumerationValue* const values = new ParameterEnumerationValue[2];
+				param.enumValues.values = values;
+
+				values[0].label = "Absolute";
+				values[0].value = MIDI_MODE_ABSOLUTE;
+				values[1].label = "Relative";
+				values[1].value = MIDI_MODE_RELATIVE;
+			}
+			param.enumValues.count = MIDI_MODE_COUNT;
+			param.enumValues.restrictedMode = true;
+			break;
 		default:
 			DISTRHO_SAFE_ASSERT(false);
 			break;
@@ -84,6 +101,8 @@ private:
 			return gNearest;
 		case 2:
 			return gCorrected;
+		case 3:
+			return midiMode;
 		default:
 			DISTRHO_SAFE_ASSERT(false);
 			break;
@@ -91,10 +110,19 @@ private:
 		return 0;
 	}
 
-	//void setParameterValue(uint32_t index, float val) override {
-	void setParameterValue(uint32_t, float) override {
-		return;
-		DISTRHO_SAFE_ASSERT(false);
+	void setParameterValue(uint32_t index, float val) override {
+		switch (index) {
+			case 3:
+				midiMode = val;
+				if (midiMode < 0 || midiMode >= MIDI_MODE_COUNT) {
+					DISTRHO_SAFE_ASSERT(false);
+					midiMode = MIDI_MODE_ABSOLUTE;
+				}
+				break;
+			default:
+				DISTRHO_SAFE_ASSERT(false);
+				return;
+		}
 	}
 
 	void addWeighted(size_t frames, float *out, float weight, const double *in) {
@@ -156,8 +184,16 @@ private:
 		/*addWeighted(frames, out, .5, synth1->shiftBy(-12));
 		addWeighted(frames, out, 1.5, synth2->shiftBy(12)); */
 		for (auto &&a : active_notes) {
-			// addWeighted(frames, out, .5, a.second->shiftToNote(a.first));
-			addWeighted(frames, out, 1, a.second->shiftBy(a.first - 60));
+			switch (midiMode) {
+				case MIDI_MODE_ABSOLUTE:
+					addWeighted(frames, out, 1, a.second->shiftToNote(a.first));
+					break;
+				case MIDI_MODE_RELATIVE:
+					addWeighted(frames, out, 1, a.second->shiftBy(a.first - 60));
+					break;
+				default:
+					DISTRHO_SAFE_ASSERT(false);
+			}
 		}
 
 		gPitch = pitch, gNearest = nearest, gCorrected = corrected;
@@ -172,6 +208,7 @@ private:
 	float gPitch = 0;
 	float gNearest = 0;
 	float gCorrected = 0;
+	int midiMode = MIDI_MODE_ABSOLUTE;
 };
 
 namespace DISTRHO {
