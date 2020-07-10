@@ -101,7 +101,11 @@ private:
 			out[i] += weight * in[i];
 	}
 
+#if DISTRHO_PLUGIN_WANT_MIDI_INPUT == 1
 	void run(const float** inputs, float** outputs, uint32_t frames, const MidiEvent *events, uint32_t eventCount) override {
+#else
+	void run(const float** inputs, float** outputs, uint32_t frames) override {
+#endif
 		// get the mono input and output
 		const float* const in  = inputs[0];
 		float* const out = outputs[0];
@@ -116,6 +120,8 @@ private:
 		nearest = pitch ? scale->nearest_tone(pitch) : 0;
 		corrected = pitch ? correction->calculate(pitch, nearest) : 0;
 		corrected = nearest;
+
+#if DISTRHO_PLUGIN_WANT_MIDI_INPUT == 1
 		for (size_t i = 0; i < eventCount; i++) {
 			auto e = events[i];
 			if (e.size != 3)
@@ -133,6 +139,7 @@ private:
 				active_notes.erase(note);
 			std::cout << (on ? "ON" : "OFF") << " " << note << "  " << active_notes.size() << std::endl;
 		}
+#endif
 
 		if (active_notes.size()) {
 			auto semitone = active_notes.begin()->first;
