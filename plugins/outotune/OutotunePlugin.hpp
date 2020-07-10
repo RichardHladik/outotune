@@ -21,6 +21,7 @@ public:
 		scale = createScale();
 		correction = createCorrection();
 		world = createWorld(frames, rate);
+		setLatency(world->latency);
 	}
 
 private:

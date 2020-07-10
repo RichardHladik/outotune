@@ -14,7 +14,7 @@
 
 class World {
 public:
-	World(size_t _frameSize, float _rate) : frameSize(_frameSize), internalFrames(3 * std::max((size_t)2048, frameSize)), rate(_rate) {
+	World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate), internalFrames(3 * std::max((size_t)2048, _frameSize)) {
         InitializeDioOption(&f0option);
 		f0option.frame_period = 5.805;
         f0option.speed = 1;
@@ -44,7 +44,6 @@ public:
 				noise[i][j] = 0;
 		}
 
-		fragmentLength = 1 << 8;
 		fragmentCount = frameSize / fragmentLength;
 		offset = f0length - fragmentCount - 1;
 	}
@@ -75,6 +74,12 @@ public:
 		return buffIn.data() + offset * fragmentLength;
 	}
 
+
+	const size_t frameSize;
+	const size_t rate;
+	static constexpr size_t fragmentLength = 1 << 8;
+	static constexpr size_t latency = fragmentLength;
+
 private:
 #include "World.hack.hpp"
 	void estimateRest() {
@@ -93,8 +98,7 @@ private:
 		}
 	}
 
-	size_t frameSize, internalFrames;
-	size_t rate;
+	size_t internalFrames;
 	DioOption f0option;
 	CheapTrickOption envelopeOption;
 	D4COption noiseOption;
@@ -103,7 +107,6 @@ private:
 	double *f0, *f0aux, *time;
 	Buffer<double> buffIn;
 	double **spectrogram, **noise;
-	size_t fragmentLength;
 	size_t offset;
 	size_t fragmentCount;
 public:
@@ -148,7 +151,7 @@ public:
 			return out();
 		}
 
-		World &w;
+		const World &w;
 		double *f0;
 		WorldSynthesizer synthesizer;
 	};
