@@ -15,7 +15,11 @@ template<typename T, typename U> void buffer_push(Buffer<T> &b, size_t count, co
 		*(p++) = (T)more[i];
 }
 
-template<typename T> void buffer_push(Buffer<T> &b, const std::vector<T> &more) {
+template<typename T, typename U> void buffer_push(Buffer<T> &b, U more) {
+	return buffer_push(b, 1, &more);
+}
+
+template<typename T, typename U> void buffer_push(Buffer<T> &b, const std::vector<U> &more) {
 	return buffer_push(b, more.size(), more.data());
 }
 
@@ -44,4 +48,8 @@ template<typename T> void buffer_pad(Buffer<T> &b, size_t size) {
 template<typename T, typename U> void buffer_exchange(Buffer<T> &b, size_t count, const U *more) {
 	buffer_pop(b, count, (T*)nullptr);
 	buffer_push(b, count, more);
+}
+
+template<typename T, typename U> void buffer_exchange(Buffer<T> &b, U more) {
+	return buffer_exchange(b, 1, &more);
 }
