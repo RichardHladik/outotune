@@ -28,3 +28,6 @@ template<typename EnumType, typename T> EnumType castToEnum(T t, EnumType def) {
 
 const float FREQ_MIN = world::kFloorF0;
 const float FREQ_MAX = 1600;
+
+// reference note for relative mode, the note that is interpreted as identity
+const float REFERENCE_NOTE = 48;

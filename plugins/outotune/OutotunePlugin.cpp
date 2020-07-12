@@ -171,7 +171,7 @@ private:
 					addWeighted(frames, out, 1, a.second->shiftToNote(a.first));
 					break;
 				case MidiMode::relative:
-					addWeighted(frames, out, 1, a.second->shiftBy(a.first - 60));
+					addWeighted(frames, out, 1, a.second->shiftBy(a.first - REFERENCE_NOTE));
 					break;
 				default:
 					DISTRHO_SAFE_ASSERT(false);
