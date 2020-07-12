@@ -7,12 +7,12 @@
 run: all
 	../../bin/outotune
 
-run-dbg: all
-	valgrind ../../bin/outotune
-
-lv2-ttl: lv2_dsp
+lv2-ttl: lv2_dsp lv2_sep ../../dpf/utils/lv2_ttl_generator
 	cd ../../bin/outotune.lv2 && ../../dpf/utils/lv2_ttl_generator ./outotune_dsp.so
 
+clean-all: clean
+	make -C ../../dpf clean
+	make -C ../../World clean
 
 
 # --------------------------------------------------------------
@@ -49,17 +49,34 @@ TARGETS += jack
 
 BUILD_CXX_FLAGS += -std=c++17 -L../../World/build -lworld -I ../../World/src -g -lfftw3
 
-jack: ../../World/build/libworld.a
-all: ../../World/build/libworld.a $(TARGETS) lv2-ttl
+EXTERNAL_DEPS = ../../World/build/libworld.a
+
+jack: $(EXTERNAL_DEPS)
+lv2_dsp: $(EXTERNAL_DEPS)
+lv2_sep: $(EXTERNAL_DEPS)
+vst: $(EXTERNAL_DEPS)
+
+all: $(TARGETS) lv2-ttl
+
 ../../World/build/libworld.a:
-	make -C ../../World
+	make -C ../../World build/libworld.a
+
+../../dpf/build/libdgl-opengl.a:
+	make -C ../../dpf dgl
+
+../../dpf/utils/lv2_ttl_generator:
+	make -C ../../dpf utils/lv2_ttl_generator
 
 .PHONY: ../../World/build/libworld.a
 
 # --------------------------------------------------------------
 
-install: ${TARGETS} lv2-ttl
+install: all
 	mkdir -p ~/.lv2
 	mkdir -p ~/.vst
 	cp -r ../../bin/outotune.lv2 ~/.lv2
 	cp ../../bin/outotune-vst.so ~/.vst
+
+uninstall:
+	rm -rf ~/.lv2/outotune.lv2
+	rm -f ~/.vst/outotune-vst.so
