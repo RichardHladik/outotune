@@ -9,7 +9,7 @@ public:
 	void onNanoDisplay() override;
 	void feedBuffer(size_t i, float x);
 private:
-	void drawBuffer(size_t i, int r, int g, int b);
+	void drawBuffer(size_t i, Color c);
 
 	float getAverageScale() {
 		float t[6];

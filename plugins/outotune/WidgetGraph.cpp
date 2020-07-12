@@ -15,10 +15,10 @@ void WidgetGraph::feedBuffer(size_t i, float x) {
 void WidgetGraph::onNanoDisplay() {
 	resetTransform();
 	scale(getWidth(), getHeight());
-	clearCurrent(this, 0, 0, 0);
-	drawBuffer(0, 255, 0, 0);
-	drawBuffer(1, 0, 255, 0);
-	drawBuffer(2, 0, 0, 255);
+	clearCurrent(this, Color(0, 0, 0));
+	drawBuffer(0, Color(255, 0, 0));
+	drawBuffer(1, Color(0, 255, 0));
+	drawBuffer(2, Color(0, 0, 255));
 }
 
 static float scaleFreq(float freq) {
@@ -29,7 +29,7 @@ static float scaleFreq(float freq) {
 	return (log(freq) - log(threshold_min)) / (log(threshold_max) - log(threshold_min));
 }
 
-void WidgetGraph::drawBuffer(size_t i, int r, int g, int b) {
+void WidgetGraph::drawBuffer(size_t i, Color c) {
 	auto &&buffer = bufs[i];
 	beginPath();
 	moveTo(0, 0);
@@ -45,7 +45,7 @@ void WidgetGraph::drawBuffer(size_t i, int r, int g, int b) {
 		prev = f;
 	}
 
-	strokeColor(r, g, b);
+	strokeColor(c);
 	strokeWidthConstant(1.5);
 	stroke();
 }

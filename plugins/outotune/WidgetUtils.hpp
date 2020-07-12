@@ -1,9 +1,10 @@
 #include "NanoVG.hpp"
 #include "Widget.hpp"
+#include "Color.hpp"
 
-static void clearCurrent(NanoWidget *w, int r=0, int g=0, int b=0) {
+static void clearCurrent(NanoWidget *w, Color c) {
 	w->beginPath();
-	w->rect(0, 0, 1, 1);
-	w->fillColor(r, g, b);
+	w->rect(0, 0, w->getWidth(), w->getHeight());
+	w->fillColor(c);
 	w->fill();
 }
