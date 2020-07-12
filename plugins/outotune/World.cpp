@@ -39,9 +39,13 @@ public:
 
         noise = new double *[f0length];
         for (size_t i = 0; i < f0length; i++) {
-            noise[i] = new double[envelopeSize / 2 + 1];
-			for (size_t j = 0; j < envelopeSize / 2 + 1; j++)
-				noise[i][j] = 0;
+			size_t n = envelopeSize / 2 + 1;
+            noise[i] = new double[n];
+			// a hackish precomputation, since calculating the correct noise
+			// values at each frame is too expensive. The following is an
+			// approximation based on measuring the noise values of a sine wave.
+			for (size_t j = 0; j < n; j++)
+				noise[i][j] = i < 140 ? pow(i / 150, 4.5) : 0.7 + 0.3 * (i / n);
 		}
 
 		fragmentCount = frameSize / fragmentLength;
@@ -81,13 +85,7 @@ public:
 	static constexpr size_t latency = fragmentLength;
 
 private:
-#include "World.hack.hpp"
 	void estimateRest() {
-		for (size_t i = 0; i < f0length; i++)  {
-			for (size_t j = 0; j < envelopeSize / 2 + 1; j++)
-			//	spectrogram[i][j] = spectrohack[j],
-				noise[i][j] = noisehack[j];
-		}
         CheapTrick(buffIn.data(), internalFrames, rate, time, f0, f0length, &envelopeOption, spectrogram);
         //D4C(buffIn.data(), internalFrames, rate, time, f0, f0length, envelopeSize, &noiseOption, noise);
 		for (size_t i = 0; i < f0length; i++)  {
@@ -109,6 +107,7 @@ private:
 	double **spectrogram, **noise;
 	size_t offset;
 	size_t fragmentCount;
+
 public:
 
 	class Synthesizer {
