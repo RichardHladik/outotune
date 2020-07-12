@@ -34,17 +34,6 @@ template<typename T> void buffer_pop(Buffer<T> &b, size_t count, T *out=nullptr)
 	b.resize(b.size() - count);
 }
 
-template<typename T> void buffer_pad(Buffer<T> &b, size_t size) {
-	if (b.size() >= size)
-		return;
-	auto sz = b.size();
-	b.resize(size);
-	for (size_t i = sz; i < size; i++)
-		b[i] = i % 8 < 4 ? .3 : -.3;
-/*	for (size_t i = 0; i < size - sz; i++)
-		b[sz + i] = b[i]; */
-}
-
 template<typename T, typename U> void buffer_exchange(Buffer<T> &b, size_t count, const U *more) {
 	buffer_pop(b, count, (T*)nullptr);
 	buffer_push(b, count, more);
