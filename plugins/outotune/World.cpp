@@ -5,7 +5,12 @@
 
 World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate), internalFrames(3 * std::max((size_t)2048, _frameSize)) {
 	InitializeDioOption(&f0option);
-	f0option.frame_period = 5.805;
+
+	// Calculated so that the fragments have lenght exactly fragmentLength ==
+	// 256, regardless of frame rate. Should be still close enough to 5ms,
+	// which is the default, granted rate is either 44.1 or 48 kHz. Might
+	// behave strangely for other rates.
+	f0option.frame_period = fragmentLength * 1000. / rate + 1e-5;
 	f0option.speed = 1;
 	f0option.f0_floor = 71.0;
 	f0option.allowed_range = 0.2;
