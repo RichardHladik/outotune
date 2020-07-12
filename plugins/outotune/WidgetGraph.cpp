@@ -43,7 +43,7 @@ void WidgetGraph::drawBuffer(size_t i, Color c) {
 		auto x = (float)i / buffer.size();
 		float semi = Scale::freq_to_semitones(f);
 		float semiPrev = Scale::freq_to_semitones(fPrev);
-		if (visible(y) && visible(yPrev) && fabs(semi - semiPrev) < 1)
+		if (visible(y) && visible(yPrev) && fabs(semi - semiPrev) < 1.5)
 			lineTo(x, 1 - y);
 		else
 			moveTo(x, 1 - y);
