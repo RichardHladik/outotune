@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <memory>
 #include <string.h>
+#include "Constants.hpp"
 #include "World.hpp"
 
 World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate), internalFrames(3 * std::max((size_t)2048, _frameSize)) {
@@ -12,7 +13,8 @@ World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate
 	// behave strangely for other rates.
 	f0option.frame_period = fragmentLength * 1000. / rate + 1e-5;
 	f0option.speed = 1;
-	f0option.f0_floor = 71.0;
+	f0option.f0_floor = FREQ_MIN;
+	f0option.f0_ceil = FREQ_MAX;
 	f0option.allowed_range = 0.2;
 	f0length = GetSamplesForDIO(rate, internalFrames, f0option.frame_period);
 	f0 = new double [f0length];
@@ -21,8 +23,7 @@ World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate
 	buffIn.resize(internalFrames);
 
 	InitializeCheapTrickOption(rate, &envelopeOption);
-	//envelopeOption.q1 = -0.15;
-	envelopeOption.f0_floor = 71.0;
+	envelopeOption.f0_floor = FREQ_MIN;
 	envelopeSize = GetFFTSizeForCheapTrick(rate, &envelopeOption);
 	spectrogram = new double *[f0length];
 	for (size_t i = 0; i < f0length; i++)
