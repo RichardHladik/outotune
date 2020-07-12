@@ -127,6 +127,31 @@ private:
 			out[i] += weight * in[i];
 	}
 
+	/* Processes all MIDI "Note on" and "Note off" events, disregards the rest.
+	 * Updates the map of active notes. */
+	void processMidi(const MidiEvent *events, uint32_t eventCount) {
+		// we assume the frame size is small enough to just pretend all the
+		// MIDI events occured at the frame start.
+		static constexpr char NOTE_ON = 0x9;
+		static constexpr char NOTE_OFF = 0x8;
+		for (size_t i = 0; i < eventCount; i++) {
+			auto e = events[i];
+			if (e.size != 3)
+				continue;
+			char type = e.data[0] >> 4;
+			if (type != NOTE_ON && type != NOTE_OFF)
+				continue;
+			bool on = type == NOTE_ON;
+			int note = e.data[1];
+			if (on) {
+				if (!active_notes.count(note))
+					active_notes.emplace(note, std::make_unique<World::Synthesizer>(*world));
+			} else {
+				active_notes.erase(note);
+			}
+		}
+	}
+
 	void run(const float** inputs, float** outputs, uint32_t frames, const MidiEvent *events, uint32_t eventCount) override {
 		// get the mono input and output
 		const float* const in  = inputs[0];
@@ -142,25 +167,7 @@ private:
 
 		pitch = world->estimate();
 
-#if DISTRHO_PLUGIN_WANT_MIDI_INPUT == 1
-		for (size_t i = 0; i < eventCount; i++) {
-			auto e = events[i];
-			if (e.size != 3)
-				continue;
-			char type = e.data[0] >> 4;
-			const char NOTE_ON = 0x9;
-			const char NOTE_OFF = 0x8;
-			if (type != NOTE_ON && type != NOTE_OFF)
-				continue;
-			bool on = type == NOTE_ON;
-			int note = e.data[1];
-			if (on && !active_notes.count(note))
-				active_notes.emplace(note, std::make_unique<World::Synthesizer>(*world));
-			else
-				active_notes.erase(note);
-			std::cout << (on ? "ON" : "OFF") << " " << note << "  " << active_notes.size() << std::endl;
-		}
-#endif
+		processMidi(events, eventCount);
 
 		if (passThrough)
 			addWeighted(frames, out, 1, world->orig());
@@ -181,6 +188,9 @@ private:
 
 private:
 	std::unique_ptr<World> world;
+	// The map of synthesizers, one per each active note. Synthesizers get
+	// created and destroyed on-the-fly. We want multiple synthesizers since
+	// World::Synthesizer is stateful.
 	std::map<int, std::unique_ptr<World::Synthesizer>> active_notes;
 	float pitch = 0;
 	enum MidiMode midiMode = MidiMode::absolute;
