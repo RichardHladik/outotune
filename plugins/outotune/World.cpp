@@ -94,7 +94,7 @@ private:
 			if (f0[i])
 				continue;
 			for (size_t j = 0; j < envelopeSize / 2 + 1; j++)
-				spectrogram[i][j] *= .0001;
+				spectrogram[i][j] *= .1;
 		}
 	}
 
