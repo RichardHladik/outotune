@@ -87,6 +87,7 @@ void WidgetButton::textCenter(const std::string &t) {
 	size *= std::min(getWidth() / bounds.getWidth(), getHeight() / bounds.getHeight());
 	size *= 0.9;
 	size = std::min(size, 50.f);
+	size = std::min(size, getWidth() / 7.f); // TODO: arbitrary number
 	fontSize(size);
 	text(x, y, t.c_str(), NULL);
 	restore();

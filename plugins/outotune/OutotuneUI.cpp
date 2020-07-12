@@ -51,6 +51,17 @@ private:
 		}
 	}
 
+	void placeButtons(std::vector<WidgetButton *> buttons, Point<int> origin, Point<unsigned> size) {
+		size_t n = buttons.size();
+		for (size_t i = 0; i < n; i++) {
+			int x = size.getX() * i / n;
+			int x1 = size.getX() * (i + 1) / n;
+			int w = x1 - x;
+			buttons[i]->setSize(w, size.getY());
+			buttons[i]->setAbsolutePos(origin.getX() + x, origin.getY());
+		}
+	}
+
 	void onNanoDisplay() override {
 		// ensure all buffers are updated, even if the value didn't change since the last time
 		for (size_t i = (size_t)pId::bufferedStart; i < (size_t)pId::bufferedEnd; i++) {
@@ -80,12 +91,8 @@ private:
 		graphVisible = graphToggle->getState();
 
 		auto bh = graphVisible ? graph->getAbsolutePos().getY() : h;
-		modeButton->setSize(ceil(w * .2), bh);
-		modeButton->setAbsolutePos(0, 0);
-		throughToggle->setSize(ceil(w * .2), bh);
-		throughToggle->setAbsolutePos(ceil(w * .2), 0);
-		graphToggle->setSize(ceil(w * .2), bh);
-		graphToggle->setAbsolutePos(ceil(w * .4), 0);
+
+		placeButtons({modeButton.get(), throughToggle.get(), graphToggle.get()}, Point(0, 0), Point(w, bh));
 		clearCurrent(this, Colors::WindowBackground);
 
 		updateParamIfChanged(pId::midiMode, modeButton->getState());
