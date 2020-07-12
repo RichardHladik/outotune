@@ -1,12 +1,7 @@
 #include "DistrhoPlugin.hpp"
-#include <atomic>
-#include <cassert>
-#include <cmath>
 #include <iostream>
-#include <set>
 #include <map>
 
-#undef NDEBUG
 #include "Constants.hpp"
 #include "World.hpp"
 
