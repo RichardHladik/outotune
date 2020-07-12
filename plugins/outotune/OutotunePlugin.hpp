@@ -14,7 +14,7 @@
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
-	OutotunePlugin() : Plugin(DISTRHO_PLUGIN_NUM_PARAMETERS, 0, 0) {
+	OutotunePlugin() : Plugin((int)pId::_count, 0, 0) {
 		size_t frames = getBufferSize();
 
 		auto rate = getSampleRate();
@@ -42,8 +42,10 @@ private:
 	}
 
 	void initParameter(uint32_t index, Parameter &param) override {
-		switch (index) {
-		case 0:
+		pId paramId = castToEnum<pId>(index, pId::_count);
+
+		switch (paramId) {
+		case pId::pitch:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
 			param.name = "Pitch";
 			param.description = "Raw detected pitch";
@@ -52,7 +54,7 @@ private:
 			param.ranges.min = 0;
 			param.ranges.def = 0;
 			break;
-		case 1:
+		case pId::nearest:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
 			param.name = "Nearest";
 			param.description = "Nearest pitch of the scale";
@@ -61,7 +63,7 @@ private:
 			param.ranges.min = 0;
 			param.ranges.def = 0;
 			break;
-		case 2:
+		case pId::corrected:
 			param.hints = kParameterIsAutomable | kParameterIsOutput;
 			param.name = "Corrected";
 			param.description = "Corrected pitch (usually somewhere between `pitch` and `nearest`";
@@ -70,7 +72,7 @@ private:
 			param.ranges.min = 0;
 			param.ranges.def = 0;
 			break;
-		case 3:
+		case pId::midiMode:
 			param.hints = kParameterIsInteger;
 			param.name = "MIDI mode";
 			param.symbol = "midi_mode";
@@ -87,7 +89,7 @@ private:
 			param.enumValues.count = (int)MidiMode::_count;
 			param.enumValues.restrictedMode = true;
 			break;
-		case 4:
+		case pId::passThrough:
 			param.hints = kParameterIsBoolean;
 			param.name = "Add input";
 			param.symbol = "add_input";
@@ -96,46 +98,62 @@ private:
 			param.ranges.min = 0;
 			param.ranges.def = 1;
 			break;
+		case pId::_count:
+			// bad index passed, probably bug in port numbering / on the host side
+			DISTRHO_SAFE_ASSERT(false);
+			break;
 		default:
+			// not implemented
 			DISTRHO_SAFE_ASSERT(false);
 			break;
 		}
 	}
 
 	float getParameterValue(uint32_t index) const override {
-		switch (index) {
-		case 0:
+		pId paramId = castToEnum<pId>(index, pId::_count);
+		switch (paramId) {
+		case pId::pitch:
 			return gPitch;
-		case 1:
+		case pId::nearest:
 			return gNearest;
-		case 2:
+		case pId::corrected:
 			return gCorrected;
-		case 3:
+		case pId::midiMode:
 			return (float)midiMode;
-		case 4:
+		case pId::passThrough:
 			return passThrough;
+			break;
+		case pId::_count:
+			// bad index passed, probably bug in port numbering / on the host side
+			DISTRHO_SAFE_ASSERT(false);
+			break;
 		default:
+			// not implemented
 			DISTRHO_SAFE_ASSERT(false);
 			break;
 		}
+
 		return 0;
 	}
 
 	void setParameterValue(uint32_t index, float val) override {
-		switch (index) {
-			case 3:
+		pId paramId = castToEnum<pId>(index, pId::_count);
+		switch (paramId) {
+			case pId::midiMode:
 				midiMode = castToEnum<MidiMode>(val, MidiMode::absolute);
 				break;
-			case 4:
+			case pId::passThrough:
 				passThrough = val;
 				break;
 			default:
+				// either not implemented, or bug on the host's side (trying to
+				// set a read-only parameter etc.)
 				DISTRHO_SAFE_ASSERT(false);
 				return;
 		}
 	}
 
-	void addWeighted(size_t frames, float *out, float weight, const double *in) {
+	static void addWeighted(size_t frames, float *out, float weight, const double *in) {
 		for (size_t i=0; i < frames; i++)
 			out[i] += weight * in[i];
 	}

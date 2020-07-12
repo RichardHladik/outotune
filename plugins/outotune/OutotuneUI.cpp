@@ -16,7 +16,7 @@ class OutotuneUI : public DISTRHO::UI {
 public:
 	OutotuneUI() : UI(512, 512) {
 		setGeometryConstraints(128, 128, false);
-		graph = std::make_unique<WidgetGraph>(this, BUFFER_SIZE, BUFFER_COUNT);
+		graph = std::make_unique<WidgetGraph>(this, BUFFER_SIZE, (size_t)pId::countBuffered);
 		static const std::vector<std::pair<std::string, Color>> modeStates = {{"absolute", Color(64, 64, 255)}, {"relative", Color(255, 255, 0)}};
 		modeButton = std::make_unique<WidgetButton>(this, modeStates, 0, "m");
 		throughToggle = std::make_unique<WidgetToggle>(this, "add input", true, "i");
@@ -25,29 +25,38 @@ public:
 
 private:
     void parameterChanged(uint32_t i, float x) override {
-		if (i >= DISTRHO_PLUGIN_NUM_PARAMETERS)
+		pId paramId = castToEnum<pId>(i, pId::_count);
+		if (paramId == pId::_count) {
+			// bad index passed, probably bug in port numbering / on the host side
+			DISTRHO_SAFE_ASSERT(false);
 			return;
+		}
+		// otherwise i == paramId (up to casting)
 
 		paramUpdated[i] = true;
 		param[i] = x;
-		switch (i) {
-		case 0:
-		case 1:
-		case 2:
-			graph->feedBuffer(i, x);
+		switch (paramId) {
+		case pId::pitch:
+		case pId::nearest:
+		case pId::corrected:
+			graph->feedBuffer(i - (size_t)pId::bufferedStart, x);
 			break;
-		case 3:
-			modeButton->setState(param[3]);
+		case pId::midiMode:
+			modeButton->setState(x);
 			break;
-		case 4:
-			throughToggle->setState(param[4]);
+		case pId::passThrough:
+			throughToggle->setState(x);
+			break;
+		default:
+			// not implemented
+			DISTRHO_SAFE_ASSERT(false);
 			break;
 		}
 	}
 
 	void onNanoDisplay() override {
 		// ensure all buffers are updated, even if the value didn't change since the last time
-		for (size_t i = 0; i < BUFFER_COUNT; i++) {
+		for (size_t i = (size_t)pId::bufferedStart; i < (size_t)pId::bufferedEnd; i++) {
 			// has not changed since the last time, meaning we must call parameterChanged manually
 			if (!paramUpdated[i])
 				parameterChanged(i, param[i]);
@@ -82,11 +91,12 @@ private:
 		graphToggle->setAbsolutePos(ceil(w * .4), 0);
 		clearCurrent(this, Color(255, 255, 255));
 
-		updateParamIfChanged(3, modeButton->getState());
-		updateParamIfChanged(4, throughToggle->getState());
+		updateParamIfChanged(pId::midiMode, modeButton->getState());
+		updateParamIfChanged(pId::passThrough, throughToggle->getState());
 	}
 
-	void updateParamIfChanged(size_t i, float x) {
+	void updateParamIfChanged(pId p, float x) {
+		size_t i = (size_t)p;
 		if (x != param[i]) {
 			param[i] = x;
 			setParameterValue(i, x);
@@ -98,9 +108,8 @@ private:
 	}
 
 	static constexpr size_t BUFFER_SIZE = 256;
-	static constexpr size_t BUFFER_COUNT = DISTRHO_PLUGIN_NUM_BUFFERED_PARAMETERS;
-	bool paramUpdated[DISTRHO_PLUGIN_NUM_PARAMETERS] = {0};
-	float param[DISTRHO_PLUGIN_NUM_PARAMETERS] = {0};
+	bool paramUpdated[(int)pId::_count] = {0};
+	float param[(int)pId::_count] = {0};
 	std::unique_ptr<WidgetGraph> graph;
 	std::unique_ptr<WidgetButton> modeButton;
 	std::unique_ptr<WidgetToggle> throughToggle;
