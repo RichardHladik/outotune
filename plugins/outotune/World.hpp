@@ -13,7 +13,9 @@ public:
 	class Synthesizer {
 	public:
 		Synthesizer(World &_world);
-		~Synthesizer();
+		~Synthesizer() {
+			delete f0;
+		}
 		Synthesizer(Synthesizer &) = delete;
 		Synthesizer operator=(Synthesizer &) = delete;
 

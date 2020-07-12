@@ -1,7 +1,8 @@
-#include <memory>
-#include <cmath>
 #ifndef OUTOTUNE_SCALE_H
 #define OUTOTUNE_SCALE_H
+
+#include <memory>
+#include <cmath>
 
 enum Tone {
 	C = 0,
@@ -40,6 +41,7 @@ public:
 		return powf(2, (semi + reference_semitones) / 12);
 	}
 
+	// converts between "shift by 12 semitones" and "multiply the frequency by 2"
 	static float semitones_to_ratio(float semi) {
 		return powf(2, semi / 12);
 	}
@@ -50,8 +52,9 @@ public:
 
 protected:
 	static constexpr float reference_semitones = 36.37631656229593;
-	// MIDI note 0, a C
+	// MIDI note 0, approx. 8.175798915643718 Hz, "C -1" in English notation
 };
 
 extern std::unique_ptr<Scale> createScale();
+
 #endif

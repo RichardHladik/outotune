@@ -82,9 +82,6 @@ World::Synthesizer::Synthesizer(World &_world) : w(_world) {
 	InitializeSynthesizer(w.rate, w.f0option.frame_period, w.envelopeSize, w.frameSize, 50, &synthesizer);
 	f0 = new double[w.f0length];
 }
-World::Synthesizer::~Synthesizer() {
-	delete f0;
-}
 const double *World::Synthesizer::shiftBy(double semitones) {
 	double scale = Scale::semitones_to_ratio(semitones);
 	for (size_t i = 0; i < w.f0length; i++)

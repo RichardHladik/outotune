@@ -1,3 +1,4 @@
+#include "Color.hpp"
 #include "world/constantnumbers.h"
 
 enum class MidiMode : int {

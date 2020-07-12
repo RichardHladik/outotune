@@ -5,8 +5,22 @@
 #include "WidgetUtils.hpp"
 
 WidgetButton::WidgetButton(Widget *group, std::vector<std::pair<std::string, Color>> _states, size_t defaultState, const std::string &_keys) : NanoWidget(group), states(std::move(_states)), state(defaultState), keys(_keys) {
-	auto font = createFontFromFile("sans", "/usr/share/fonts/TTF/OpenSans-Regular.ttf");
-	if (font == -1)
+	// TODO: hack
+	static const std::vector<std::string> candidates = {
+		"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+		"/usr/share/fonts/TTF/DejaVuSans.ttf",
+	};
+
+	bool ok = false;
+	for (auto &&a : candidates) {
+		auto font = createFontFromFile("sans", a.c_str());
+		if (font != -1) {
+			ok = true;
+			break;
+		}
+	}
+
+	if (!ok)
 		std::cout << "Could not add font." << std::endl;
 }
 
@@ -27,7 +41,7 @@ bool WidgetButton::onMouse(const MouseEvent &e) {
 	if (!inside)
 		goto ret;
 
-	state = (state + 1) % states.size();
+	advanceState();
 ret:
 	return Widget::onMouse(e);
 }
@@ -39,13 +53,9 @@ bool WidgetButton::onKeyboard(const KeyboardEvent &e) {
 	if (keys.find(e.key) == std::string::npos)
 		goto ret;
 
-	state = (state + 1) % states.size();
+	advanceState();
 ret:
 	return Widget::onKeyboard(e);
-}
-
-size_t WidgetButton::getState() {
-	return state;
 }
 
 void WidgetButton::setState(size_t s) {
@@ -60,22 +70,24 @@ void WidgetButton::textCenter(const std::string &t) {
 	if (t.empty())
 		return;
 
+	save();
 	fontFace("sans");
-	fillColor(0, 0, 0);
-	float lineh = 1.2f;
-	textMetrics(NULL, NULL, &lineh);
+	fillColor(Colors::ButtonText);
 	textAlign(ALIGN_CENTER|ALIGN_MIDDLE);
 	textLineHeight(1.2);
+	float x = getWidth() / 2, y = getHeight() / 2;
+
 	float size = 2 * getWidth() / t.size(); // estimate
 	fontSize(size);
-	float x = getWidth() / 2, y = getHeight() / 2;
 	Rectangle<float> bounds;
-	
+	// calculate text size if rendered with our estimated size
 	textBounds(x, y, t.c_str(), NULL, bounds);
+
 	// recalibrate, assuming font scaling behaves linearly
 	size *= std::min(getWidth() / bounds.getWidth(), getHeight() / bounds.getHeight());
 	size *= 0.9;
 	size = std::min(size, 50.f);
 	fontSize(size);
 	text(x, y, t.c_str(), NULL);
+	restore();
 }

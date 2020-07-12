@@ -2,8 +2,8 @@
 #include "NanoVG.hpp"
 #include "Widget.hpp"
 #include "Color.hpp"
+#include "Colors.hpp"
 
-static const Color COLOR_TOGGLED = Color(0, 255, 0), COLOR_UNTOGGLED = Color(255, 0, 0);
 
 class WidgetButton : public DGL::NanoWidget {
 public:
@@ -11,10 +11,15 @@ public:
 	void onNanoDisplay() override;
 	bool onMouse(const MouseEvent &) override;
 	bool onKeyboard(const KeyboardEvent &) override;
-	virtual size_t getState();
-	virtual void setState(size_t state);
+	auto getState() const {
+		return state;
+	}
+	void setState(size_t state);
 private:
 	void textCenter(const std::string &);
+	void advanceState() {
+		state = (state + 1) % states.size();
+	}
 	std::vector<std::pair<std::string, Color>> states;
 	size_t state = 0;
 	std::string keys;
@@ -22,6 +27,6 @@ private:
 
 class WidgetToggle : public WidgetButton {
 public:
-	explicit WidgetToggle(Widget *group, const std::string &label, bool checked=false, const std::string &keys="") : WidgetButton(group, (std::vector<std::pair<std::string, Color>>){{label, COLOR_UNTOGGLED}, {label, COLOR_TOGGLED}}, checked, keys) {
+	explicit WidgetToggle(Widget *group, const std::string &label, bool checked=false, const std::string &keys="") : WidgetButton(group, (std::vector<std::pair<std::string, Color>>){{label, Colors::ButtonUntoggled}, {label, Colors::ButtonToggled}}, checked, keys) {
 	}
 };

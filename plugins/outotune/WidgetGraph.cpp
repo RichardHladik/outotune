@@ -1,6 +1,7 @@
 #include "WidgetGraph.hpp"
 
 #include "Constants.hpp"
+#include "Colors.hpp"
 #include "Window.hpp"
 #include "WidgetUtils.hpp"
 #include "Scale.hpp"
@@ -16,9 +17,9 @@ void WidgetGraph::feedBuffer(size_t i, float x) {
 void WidgetGraph::onNanoDisplay() {
 	resetTransform();
 	scale(getWidth(), getHeight());
-	clearCurrent(this, Color(0, 0, 0));
+	clearCurrent(this, Colors::GraphBackground);
 	for (size_t i = 0; i < bufs.size(); i++) {
-		Color c = i ? Color(0, 255, 0) : Color(255, 0, 0);
+		Color c = i ? Colors::GraphSecondary : Colors::GraphPrimary;
 		drawBuffer(i, c);
 	}
 }

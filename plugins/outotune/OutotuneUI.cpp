@@ -16,7 +16,7 @@ public:
 	OutotuneUI() : UI(512, 512) {
 		setGeometryConstraints(128, 128, false);
 		graph = std::make_unique<WidgetGraph>(this, BUFFER_SIZE, (size_t)pId::countBuffered);
-		static const std::vector<std::pair<std::string, Color>> modeStates = {{"absolute", Color(64, 64, 255)}, {"relative", Color(255, 255, 0)}};
+		static const std::vector<std::pair<std::string, Color>> modeStates = {{"absolute", Colors::ModeAbsolute}, {"relative", Colors::ModeRelative}};
 		modeButton = std::make_unique<WidgetButton>(this, modeStates, 0, "m");
 		throughToggle = std::make_unique<WidgetToggle>(this, "add input", true, "i");
 		graphToggle = std::make_unique<WidgetToggle>(this, "show graph", true, "g");
@@ -86,7 +86,7 @@ private:
 		throughToggle->setAbsolutePos(ceil(w * .2), 0);
 		graphToggle->setSize(ceil(w * .2), bh);
 		graphToggle->setAbsolutePos(ceil(w * .4), 0);
-		clearCurrent(this, Color(255, 255, 255));
+		clearCurrent(this, Colors::WindowBackground);
 
 		updateParamIfChanged(pId::midiMode, modeButton->getState());
 		updateParamIfChanged(pId::passThrough, throughToggle->getState());
