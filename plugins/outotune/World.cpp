@@ -4,7 +4,7 @@
 #include "Constants.hpp"
 #include "World.hpp"
 
-World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate), internalFrames(3 * std::max((size_t)2048, _frameSize)) {
+World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate), bufferSize(std::max((size_t)3 * 2048, _frameSize + 3 * fragmentLength)) {
 	InitializeDioOption(&f0option);
 
 	// Calculated so that the fragments have lenght exactly fragmentLength ==
@@ -16,11 +16,11 @@ World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate
 	f0option.f0_floor = FREQ_MIN;
 	f0option.f0_ceil = FREQ_MAX;
 	f0option.allowed_range = 0.2;
-	f0length = GetSamplesForDIO(rate, internalFrames, f0option.frame_period);
+	f0length = GetSamplesForDIO(rate, bufferSize, f0option.frame_period);
 	f0 = new double [f0length];
 	f0aux = new double [f0length];
 	time = new double [f0length];
-	buffIn.resize(internalFrames);
+	buffIn.resize(bufferSize);
 
 	InitializeCheapTrickOption(rate, &envelopeOption);
 	envelopeOption.f0_floor = FREQ_MIN;
@@ -43,7 +43,6 @@ World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate
 			noise[i][j] = i < 140 ? pow(i / 150, 4.5) : 0.7 + 0.3 * (i / n);
 	}
 
-	fragmentCount = frameSize / fragmentLength;
 	offset = f0length - fragmentCount - 1;
 }
 
@@ -59,22 +58,27 @@ World::~World() {
 	delete[] noise;
 }
 
-double World::estimate(void) {
-	Dio(buffIn.data(), internalFrames, rate, &f0option, time, f0aux);
-	StoneMask(buffIn.data(), internalFrames, rate, time, f0aux, f0length, f0);
-	size_t samples = std::min(f0length, 1 + f0length * frameSize / internalFrames);
-	double k = 1, total = 0, mean = 0;
-	for (int i = (int)f0length - 1; i >= 0; i--) {
-		if (i + samples < f0length) 
-			k *= 1;
-		if (f0[i] == 0)
+double World::aggregateF0Fragments(double *f, size_t cnt) {
+	double mean = 0;
+	size_t total = 0; // total number of nonzero fragments
+	for (size_t i = 0; i < cnt; i++) {
+		if (f[i] == 0)
 			continue;
-		mean += f0[i] * k;
-		total += k;
+		mean += Scale::freq_to_semitones(f[i]);
+		total++;
 	}
 
+	return total <= cnt / 4 ? 0 : Scale::semitones_to_freq(mean / total);
+}
+
+double World::estimate(void) {
+	// initial f0 estimation
+	Dio(buffIn.data(), bufferSize, rate, &f0option, time, f0aux);
+	// refinement
+	StoneMask(buffIn.data(), bufferSize, rate, time, f0aux, f0length, f0);
+
 	estimateRest();
-	return (total == 0) ? 0 : mean / total;
+	return aggregateF0Fragments(f0 + offset, fragmentCount);
 }
 
 void World::feed(const float *in, size_t frames) {
@@ -86,8 +90,12 @@ const double *World::orig() const {
 }
 
 void World::estimateRest() {
-	CheapTrick(buffIn.data(), internalFrames, rate, time, f0, f0length, &envelopeOption, spectrogram);
-	//D4C(buffIn.data(), internalFrames, rate, time, f0, f0length, envelopeSize, &noiseOption, noise);
+	// spectral envelope estimation
+	CheapTrick(buffIn.data(), bufferSize, rate, time, f0, f0length, &envelopeOption, spectrogram);
+	// uncomment the following to get noise contour estimation, currently we get a fake hardcoded contour 
+	// D4C(buffIn.data(), bufferSize, rate, time, f0, f0length, envelopeSize, &noiseOption, noise);
+	
+	// workaround: lower the volume of unvoiced frames (to prevent cracks and hisses)
 	for (size_t i = 0; i < f0length; i++)  {
 		if (f0[i])
 			continue;
