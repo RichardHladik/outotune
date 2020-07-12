@@ -1,7 +1,6 @@
 #include "WidgetButton.hpp"
 
 #include <iostream>
-#include <fstream>
 #include "Window.hpp"
 #include "WidgetUtils.hpp"
 

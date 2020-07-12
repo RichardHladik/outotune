@@ -206,8 +206,7 @@ private:
 
 		if (passThrough)
 			addWeighted(frames, out, 1, world->orig());
-		/*addWeighted(frames, out, .5, synth1->shiftBy(-12));
-		addWeighted(frames, out, 1.5, synth2->shiftBy(12)); */
+
 		for (auto &&a : active_notes) {
 			switch (midiMode) {
 				case MidiMode::absolute:

@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <memory>
-#include <iostream>
 #include <string.h>
 #include "World.hpp"
 
