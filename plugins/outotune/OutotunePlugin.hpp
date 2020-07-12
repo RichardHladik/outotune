@@ -87,6 +87,15 @@ private:
 			param.enumValues.count = MIDI_MODE_COUNT;
 			param.enumValues.restrictedMode = true;
 			break;
+		case 4:
+			param.hints = kParameterIsBoolean;
+			param.name = "Add input";
+			param.symbol = "add_input";
+			param.description = "Include the original signal in the output";
+			param.ranges.max = 1;
+			param.ranges.min = 0;
+			param.ranges.def = 1;
+			break;
 		default:
 			DISTRHO_SAFE_ASSERT(false);
 			break;
@@ -103,6 +112,8 @@ private:
 			return gCorrected;
 		case 3:
 			return midiMode;
+		case 4:
+			return passThrough;
 		default:
 			DISTRHO_SAFE_ASSERT(false);
 			break;
@@ -118,6 +129,9 @@ private:
 					DISTRHO_SAFE_ASSERT(false);
 					midiMode = MIDI_MODE_ABSOLUTE;
 				}
+				break;
+			case 4:
+				passThrough = val;
 				break;
 			default:
 				DISTRHO_SAFE_ASSERT(false);
@@ -180,7 +194,8 @@ private:
 			corrected = Scale::semitones_to_freq(semitone);
 		}
 
-		addWeighted(frames, out, 1, world->orig());
+		if (passThrough)
+			addWeighted(frames, out, 1, world->orig());
 		/*addWeighted(frames, out, .5, synth1->shiftBy(-12));
 		addWeighted(frames, out, 1.5, synth2->shiftBy(12)); */
 		for (auto &&a : active_notes) {
@@ -209,6 +224,7 @@ private:
 	float gNearest = 0;
 	float gCorrected = 0;
 	int midiMode = MIDI_MODE_ABSOLUTE;
+	bool passThrough = true;
 };
 
 namespace DISTRHO {
