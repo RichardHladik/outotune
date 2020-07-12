@@ -80,11 +80,11 @@ private:
 				param.enumValues.values = values;
 
 				values[0].label = "Absolute";
-				values[0].value = MIDI_MODE_ABSOLUTE;
+				values[0].value = (int)MidiMode::absolute;
 				values[1].label = "Relative";
-				values[1].value = MIDI_MODE_RELATIVE;
+				values[1].value = (int)MidiMode::relative;
 			}
-			param.enumValues.count = MIDI_MODE_COUNT;
+			param.enumValues.count = (int)MidiMode::_count;
 			param.enumValues.restrictedMode = true;
 			break;
 		case 4:
@@ -111,7 +111,7 @@ private:
 		case 2:
 			return gCorrected;
 		case 3:
-			return midiMode;
+			return (float)midiMode;
 		case 4:
 			return passThrough;
 		default:
@@ -124,11 +124,7 @@ private:
 	void setParameterValue(uint32_t index, float val) override {
 		switch (index) {
 			case 3:
-				midiMode = val;
-				if (midiMode < 0 || midiMode >= MIDI_MODE_COUNT) {
-					DISTRHO_SAFE_ASSERT(false);
-					midiMode = MIDI_MODE_ABSOLUTE;
-				}
+				midiMode = castToEnum<MidiMode>(val, MidiMode::absolute);
 				break;
 			case 4:
 				passThrough = val;
@@ -144,11 +140,7 @@ private:
 			out[i] += weight * in[i];
 	}
 
-#if DISTRHO_PLUGIN_WANT_MIDI_INPUT == 1
 	void run(const float** inputs, float** outputs, uint32_t frames, const MidiEvent *events, uint32_t eventCount) override {
-#else
-	void run(const float** inputs, float** outputs, uint32_t frames) override {
-#endif
 		// get the mono input and output
 		const float* const in  = inputs[0];
 		float* const out = outputs[0];
@@ -200,10 +192,10 @@ private:
 		addWeighted(frames, out, 1.5, synth2->shiftBy(12)); */
 		for (auto &&a : active_notes) {
 			switch (midiMode) {
-				case MIDI_MODE_ABSOLUTE:
+				case MidiMode::absolute:
 					addWeighted(frames, out, 1, a.second->shiftToNote(a.first));
 					break;
-				case MIDI_MODE_RELATIVE:
+				case MidiMode::relative:
 					addWeighted(frames, out, 1, a.second->shiftBy(a.first - 60));
 					break;
 				default:
@@ -223,7 +215,7 @@ private:
 	float gPitch = 0;
 	float gNearest = 0;
 	float gCorrected = 0;
-	int midiMode = MIDI_MODE_ABSOLUTE;
+	enum MidiMode midiMode = MidiMode::absolute;
 	bool passThrough = true;
 };
 
