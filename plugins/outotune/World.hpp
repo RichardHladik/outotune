@@ -37,6 +37,7 @@ public:
 	};
 
 	World(size_t _frameSize, float _rate);
+	~World();
 	void feed(const float *in, size_t frames);
 	double estimate(void);
 	const double *orig() const;

@@ -41,6 +41,18 @@ World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate
 	offset = f0length - fragmentCount - 1;
 }
 
+World::~World() {
+	delete[] f0;
+	delete[] f0aux;
+	delete[] time;
+	for (size_t i = 0; i < f0length; i++) {
+		delete[] spectrogram[i];
+		delete[] noise[i];
+	}
+	delete[] spectrogram;
+	delete[] noise;
+}
+
 double World::estimate(void) {
 	Dio(buffIn.data(), internalFrames, rate, &f0option, time, f0aux);
 	StoneMask(buffIn.data(), internalFrames, rate, time, f0aux, f0length, f0);
