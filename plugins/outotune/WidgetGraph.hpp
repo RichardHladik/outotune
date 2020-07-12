@@ -11,18 +11,6 @@ public:
 private:
 	void drawBuffer(size_t i, Color c);
 
-	float getAverageScale() {
-		float t[6];
-		currentTransform(t);
-		float sx = sqrtf(t[0]*t[0] + t[2]*t[2]);
-		float sy = sqrtf(t[1]*t[1] + t[3]*t[3]);
-		return (sx + sy) * 0.5f;
-	}
-
-	void strokeWidthConstant(float w) {
-		strokeWidth(w / getAverageScale());
-	}
-
 	size_t bufferSize, bufferCount;
 	std::vector<Buffer<float>> bufs;
 };

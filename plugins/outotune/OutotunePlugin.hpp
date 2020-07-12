@@ -18,8 +18,6 @@ public:
 		size_t frames = getBufferSize();
 
 		auto rate = getSampleRate();
-		scale = createScale();
-		correction = createCorrection();
 		world = createWorld(frames, rate);
 		setLatency(world->latency);
 	}
@@ -50,24 +48,6 @@ private:
 			param.name = "Pitch";
 			param.description = "Raw detected pitch";
 			param.symbol = "pitch";
-			param.ranges.max = getSampleRate() / 2;
-			param.ranges.min = 0;
-			param.ranges.def = 0;
-			break;
-		case pId::nearest:
-			param.hints = kParameterIsAutomable | kParameterIsOutput;
-			param.name = "Nearest";
-			param.description = "Nearest pitch of the scale";
-			param.symbol = "nearest";
-			param.ranges.max = getSampleRate() / 2;
-			param.ranges.min = 0;
-			param.ranges.def = 0;
-			break;
-		case pId::corrected:
-			param.hints = kParameterIsAutomable | kParameterIsOutput;
-			param.name = "Corrected";
-			param.description = "Corrected pitch (usually somewhere between `pitch` and `nearest`";
-			param.symbol = "corrected";
 			param.ranges.max = getSampleRate() / 2;
 			param.ranges.min = 0;
 			param.ranges.def = 0;
@@ -113,11 +93,7 @@ private:
 		pId paramId = castToEnum<pId>(index, pId::_count);
 		switch (paramId) {
 		case pId::pitch:
-			return gPitch;
-		case pId::nearest:
-			return gNearest;
-		case pId::corrected:
-			return gCorrected;
+			return pitch;
 		case pId::midiMode:
 			return (float)midiMode;
 		case pId::passThrough:
@@ -171,13 +147,7 @@ private:
 		for (uint32_t i=0; i < frames; i++)
 			out[i] = 0;
 
-		auto npitch = world->estimate();
-
-		float pitch = gPitch, nearest = gNearest, corrected = gCorrected;
-		pitch = npitch;
-		nearest = pitch ? scale->nearest_tone(pitch) : 0;
-		corrected = pitch ? correction->calculate(pitch, nearest) : 0;
-		corrected = nearest;
+		pitch = world->estimate();
 
 #if DISTRHO_PLUGIN_WANT_MIDI_INPUT == 1
 		for (size_t i = 0; i < eventCount; i++) {
@@ -199,11 +169,6 @@ private:
 		}
 #endif
 
-		if (active_notes.size()) {
-			auto semitone = active_notes.begin()->first;
-			corrected = Scale::semitones_to_freq(semitone);
-		}
-
 		if (passThrough)
 			addWeighted(frames, out, 1, world->orig());
 
@@ -219,19 +184,12 @@ private:
 					DISTRHO_SAFE_ASSERT(false);
 			}
 		}
-
-		gPitch = pitch, gNearest = nearest, gCorrected = corrected;
-		return;
 	}
 
 private:
-	std::unique_ptr<Scale> scale;
-	std::unique_ptr<Correction> correction;
 	std::unique_ptr<World> world;
 	std::map<int, std::unique_ptr<World::Synthesizer>> active_notes;
-	float gPitch = 0;
-	float gNearest = 0;
-	float gCorrected = 0;
+	float pitch = 0;
 	enum MidiMode midiMode = MidiMode::absolute;
 	bool passThrough = true;
 };

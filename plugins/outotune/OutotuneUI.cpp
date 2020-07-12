@@ -36,8 +36,6 @@ private:
 		param[i] = x;
 		switch (paramId) {
 		case pId::pitch:
-		case pId::nearest:
-		case pId::corrected:
 			graph->feedBuffer(i - (size_t)pId::bufferedStart, x);
 			break;
 		case pId::midiMode:

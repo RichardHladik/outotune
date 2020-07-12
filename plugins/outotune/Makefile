@@ -32,6 +32,7 @@ FILES_DSP = \
 
 FILES_UI = \
 	OutotuneUI.cpp \
+	WidgetUtils.cpp \
 	WidgetGraph.cpp \
 	WidgetButton.cpp \
 

@@ -9,8 +9,6 @@ enum class MidiMode : int {
 enum class pId : int {
 	bufferedStart,
 	pitch = bufferedStart,
-	nearest,
-	corrected,
 	bufferedEnd,
 
 	midiMode = bufferedEnd,
