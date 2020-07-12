@@ -1,6 +1,6 @@
 #include "WidgetGraph.hpp"
 
-#include <iostream>
+#include "Constants.hpp"
 #include "Window.hpp"
 #include "WidgetUtils.hpp"
 
@@ -22,11 +22,7 @@ void WidgetGraph::onNanoDisplay() {
 }
 
 static float scaleFreq(float freq) {
-	static constexpr float threshold_min = 50;
-	static constexpr float threshold_max = 3000;
-	if (freq - threshold_min <= 20)
-		return 0;
-	return (log(freq) - log(threshold_min)) / (log(threshold_max) - log(threshold_min));
+	return (log(freq / FREQ_MIN)) / (log(FREQ_MAX / FREQ_MIN));
 }
 
 void WidgetGraph::drawBuffer(size_t i, Color c) {
