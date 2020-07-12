@@ -25,6 +25,7 @@ NAME = outotune
 
 FILES_DSP = \
 	OutotunePlugin.cpp \
+	World.cpp \
 	ScaleGeneric.cpp \
 	CorrectionClamp.cpp \
 

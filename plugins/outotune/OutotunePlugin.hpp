@@ -10,7 +10,7 @@
 #include "Constants.hpp"
 #include "Scale.hpp"
 #include "Correction.hpp"
-#include "World.cpp"
+#include "World.hpp"
 
 class OutotunePlugin : public DISTRHO::Plugin {
 public:
