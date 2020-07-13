@@ -4,6 +4,8 @@
 # Created by falkTX
 #
 
+.DEFAULT_GOAL := all
+
 run: all
 	../../bin/outotune
 
@@ -42,10 +44,16 @@ include ../../dpf/Makefile.plugins.mk
 # --------------------------------------------------------------
 # Enable all possible plugin types
 
-TARGETS += lv2_dsp
+ifeq ($(HAVE_OPENGL),true)
 TARGETS += lv2_sep
+else
+TARGETS += lv2_dsp
+endif
+
 TARGETS += vst
+ifeq ($(HAVE_JACK),true)
 TARGETS += jack
+endif
 
 BUILD_CXX_FLAGS += -std=c++17 -L../../World/build -lworld -I ../../World/src -g -lfftw3
 
