@@ -1,8 +1,11 @@
-Out-O'-Tune
-===========
+Outotune
+========
 
-An opensource harmoniser implementation for LV2 and VST leveraging the DISTRHO
-Plugin Framework.
+An opensource harmoniser implementation for LV2 and VST leveraging the [DISTRHO
+Plugin Framework][dpf] and the [WORLD speech analysis, manipulation and synthesis system][world]
+
+[dpf]: https://github.com/DISTRHO/DPF
+[world]: https://github.com/mmorise/World
 
 What is it?
 -----------
@@ -17,6 +20,15 @@ It allows you to become a one-man choir by analysing your voice and
 resynthesizing it at different pitches. It is controlled by MIDI, which
 basically means you can sing and accompany yourself by playing chords on your
 keyboard, and get a full choir of yous. 
+
+See [Technical details](plugins/outotune/README.md) for more detailed description and documentation.
+
+Why the name?
+-------------
+
+Originally, Outotune was meant to be an opensource Autotune/Melodyne
+implementation, but it evolved into a harmoniser. Outotune comes from "Out o'
+tune", which is pretty self-explanatory.
 
 Dependencies
 ------------
@@ -94,10 +106,8 @@ The top bar contains three clickable toggles for controlling the application.
 Each of these toggles can also be triggered by a keyboard shortcut.
 
 * **absolute/relative** mode toggle (`m`): switches between absolute and relative mode.
-
 * **add input** (`i`): whether to include the original input in the output (besides
   the synthesized voices) or not.
-
 * **show graph** (`g`): show or hide the graph.
 
 
