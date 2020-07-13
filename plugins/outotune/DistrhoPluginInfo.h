@@ -1,9 +1,12 @@
 #ifndef DISTRHO_PLUGIN_INFO_H
 #define DISTRHO_PLUGIN_INFO_H
 
+#define DISTRHO_PLUGIN_BRAND  "Uralyx"
 #define DISTRHO_PLUGIN_NAME  "Outotune"
 #define DISTRHO_PLUGIN_AUTHOR "Richard Hladík"
-#define DISTRHO_PLUGIN_URI   "http://uralyx.cz/prog/Outotune"
+#define DISTRHO_PLUGIN_DESCRIPTION "An opensource harmoniser"
+#define DISTRHO_PLUGIN_URI   "http://uralyx.cz/prog/outotune"
+#define DISTRHO_PLUGIN_HOMEPAGE   "http://uralyx.cz/prog/outotune"
 #define DISTRHO_PLUGIN_LICENSE "GPL3"
 
 #define DISTRHO_PLUGIN_HAS_UI        1

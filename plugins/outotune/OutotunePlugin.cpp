@@ -19,14 +19,20 @@ private:
 	const char* getLabel() const override {
 		return DISTRHO_PLUGIN_NAME;
 	}
+	const char *getDescription() const override {
+		return DISTRHO_PLUGIN_DESCRIPTION;
+	}
 	const char* getMaker() const override {
 		return DISTRHO_PLUGIN_AUTHOR;
+	}
+	const char* getHomePage() const override {
+		return DISTRHO_PLUGIN_HOMEPAGE;
 	}
 	const char* getLicense() const override {
 		return DISTRHO_PLUGIN_LICENSE;
 	}
 	uint32_t getVersion() const override {
-		return d_version(0, 0, 0);
+		return d_version(1, 0, 0);
 	}
 	int64_t getUniqueId() const override {
 		return d_cconst('O', 't', 'u', 'n');
