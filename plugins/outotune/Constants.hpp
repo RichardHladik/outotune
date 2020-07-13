@@ -30,4 +30,4 @@ const float FREQ_MIN = world::kFloorF0;
 const float FREQ_MAX = 1600;
 
 // reference note for relative mode, the note that is interpreted as identity
-const float REFERENCE_NOTE = 48;
+const float REFERENCE_NOTE = 60;
