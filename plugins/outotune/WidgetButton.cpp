@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include "Window.hpp"
-#include "WidgetUtils.hpp"
+#include "UIUtils.hpp"
 
 WidgetButton::WidgetButton(Widget *group, std::vector<std::pair<std::string, Color>> _states, size_t defaultState, const std::string &_keys) : NanoWidget(group), states(std::move(_states)), state(defaultState), keys(_keys) {
 	// TODO: hack

@@ -3,7 +3,7 @@
 #include "Constants.hpp"
 #include "Colors.hpp"
 #include "Window.hpp"
-#include "WidgetUtils.hpp"
+#include "UIUtils.hpp"
 #include "Scale.hpp"
 
 WidgetGraph::WidgetGraph(Widget *group, size_t _bufferSize, size_t _bufferCount) : NanoWidget(group), bufferSize(_bufferSize), bufferCount(_bufferCount) {

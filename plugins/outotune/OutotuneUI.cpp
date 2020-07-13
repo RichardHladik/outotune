@@ -2,7 +2,7 @@
 #include <vector>
 #include "DistrhoUI.hpp"
 #include "Constants.hpp"
-#include "WidgetUtils.hpp"
+#include "UIUtils.hpp"
 #include "WidgetGraph.hpp"
 #include "WidgetButton.hpp"
 
