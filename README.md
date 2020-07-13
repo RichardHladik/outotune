@@ -59,32 +59,62 @@ Other useful commands are:
 Usage
 -----
 
-By default, Outotune processes audio by estimating the current pitch and
-shifting it to the nearest diatonic pitch (the scale used may be arbitrary and
-is at the moment specified at compile-time).
+Outotune has 3 ports: mono input, MIDI input and mono output. The set of
+currently active notes is maintained by listening to MIDI `Note On` and `Note
+Off` events. In each period, Outotune analyses the the audio in the input
+buffer, synthesizes a voice for each active note, and muxes them into a single
+output. In the LV2 plugin, the instantaneous estimated fundamental frequency
+is available as an output parameter `pitch`.
 
-However, Outotune also supports MIDI input mode in which the pitch to Shift to
-is controlled by the currently playing midi tone. The obvious caveat is that
-shifting the pitch by a large amount may (and usually will) produce low quality
-results.
+### Modes
 
-The gui shows the pitch information as a function of time. The estimated pitch
-is shown in red, while the output pitch is shown in blue. Black areas represent
-the places where no pitch was detected.
+Outotune has two modes which control how the MIDI events are interpreted:
+
+* **Absolute mode.** For each active note `n` (corresponding to the MIDI event
+  `Note On n`), a voice is synthesized with the pitch corresponding to the note
+  `n`. This emulates the functionality of the original harmonizer.
+
+* **Relative mode.** Each active note `n` is interpreted relative to the
+  reference note `r = 60` (corresponds to middle C). Let `p` be the
+  instantaneous pitch of the input signal. Then the synthesized voice has pitch
+  `p + (n - r)`. For example, playing `n = 72` (a C one octave above middle C)
+  results in the input voice being shifted up by one octave.
+
+### GUI
+
+![GUI](ui.png)
+
+The GUI consists of two parts: frequency graph and a top bar.
+
+The frequency graph shows the estimated pitch as a function of time. The
+estimated pitch is shown in red, black areas represent the places where no
+pitch was detected.
+
+The top bar contains three clickable toggles for controlling the application.
+Each of these toggles can also be triggered by a keyboard shortcut.
+
+* **absolute/relative** mode toggle (`m`): switches between absolute and relative mode.
+
+* **add input** (`i`): whether to include the original input in the output (besides
+  the synthesized voices) or not.
+
+* **show graph** (`g`): show or hide the graph.
+
 
 Known limitations
 -----------------
 
-Currently, Outotune suffers from great latency. This may be partially improved
-by using a different pitch shifting library and/or a different pitch tracking
-algorithm (which may also help accuracy in general)
+Currently, Outotune is computationally expensive. WORLD, the underlying speech
+analysis and synthesis system does not seem to be optimised for our workflow –
+in fact, real-time analysis is not officially supported (although real-time
+synthesis is). This may be improved by refactoring WORLD, mainly by reducing
+repetitive allocations and making better use of FFTW3 plans. Potential
+improvements can also be made by reducing the amount of data WORLD has to
+compute in each period.
 
-The rubberband pitch shifting library isn't well suited for our purposes, since
-it's designed for shifting and stretching of general audio as opposed to human
-voice. Incidentally this also means Outotune doesn't currently preserve
-formants.
-
-Currently Outotune produces "dirty", cracking audio which we suspect is a
-result of the rubberband library not handling frequent changing of the pitch
-shift amount very well.
+Direct result of this is latency. For small enough buffer sizes, reducing the
+buffer size does not substantially reduce the work done in one period, which
+effectively means the smaller the buffer size, the more computationally
+expensive Outotune becomes. Latency is then directly determined by the smallest
+buffer size with which Outotune can still run smoothly on the machine.
 
