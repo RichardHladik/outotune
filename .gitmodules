@@ -1,6 +1,6 @@
 [submodule "dpf"]
 	path = dpf
-	url = https://github.com/DISTRHO/DPF
+	url = https://github.com/RichardHladik/DPF
 [submodule "World"]
 	path = World
 	url = https://github.com/RichardHladik/World
