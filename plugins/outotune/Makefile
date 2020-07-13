@@ -1,16 +1,13 @@
 #!/usr/bin/make -f
 # Makefile for DISTRHO Plugins #
 # ---------------------------- #
-# Created by falkTX
+# Created by falkTX, adapted by Richard Hladík
 #
 
 .DEFAULT_GOAL := all
 
 run: all
 	../../bin/outotune
-
-lv2-ttl: lv2_dsp lv2_sep ../../dpf/utils/lv2_ttl_generator
-	cd ../../bin/outotune.lv2 && ../../dpf/utils/lv2_ttl_generator ./outotune_dsp.so
 
 clean-all: clean
 	make -C ../../dpf clean
@@ -45,11 +42,15 @@ include ../../dpf/Makefile.plugins.mk
 # Enable all possible plugin types
 
 ifeq ($(HAVE_OPENGL),true)
-TARGETS += lv2_sep
+LV2 = lv2_sep
 else
-TARGETS += lv2_dsp
+LV2 = lv2_dsp
 endif
 
+../../bin/outotune.lv2/manifest.ttl: $(LV2) ../../dpf/utils/lv2_ttl_generator
+	cd ../../bin/outotune.lv2 && ../../dpf/utils/lv2_ttl_generator ./outotune_dsp.so
+
+TARGETS += $(LV2)
 TARGETS += vst
 ifeq ($(HAVE_JACK),true)
 TARGETS += jack
@@ -64,7 +65,7 @@ lv2_dsp: $(EXTERNAL_DEPS)
 lv2_sep: $(EXTERNAL_DEPS)
 vst: $(EXTERNAL_DEPS)
 
-all: $(TARGETS) lv2-ttl
+all: $(TARGETS) ../../bin/outotune.lv2/manifest.ttl
 
 ../../World/build/libworld.a:
 	make -C ../../World build/libworld.a
