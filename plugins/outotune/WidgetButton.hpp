@@ -27,6 +27,6 @@ private:
 
 class WidgetToggle : public WidgetButton {
 public:
-	explicit WidgetToggle(Widget *group, const std::string &label, bool checked=false, const std::string &keys="") : WidgetButton(group, (std::vector<std::pair<std::string, Color>>){{label, Colors::ButtonUntoggled}, {label, Colors::ButtonToggled}}, checked, keys) {
+	explicit WidgetToggle(Widget *group, const std::string &label, bool checked=false, const std::string &keys="") : WidgetButton(group, (std::vector<std::pair<std::string, Color>>){{"× " + label, Colors::ButtonUntoggled}, {"✓ " + label, Colors::ButtonToggled}}, checked, keys) {
 	}
 };
