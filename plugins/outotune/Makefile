@@ -5,6 +5,7 @@
 #
 
 .DEFAULT_GOAL := all
+SKIP_STRIPPING := true
 
 run: all
 	../../bin/outotune
@@ -75,6 +76,15 @@ all: $(TARGETS) ../../bin/outotune.lv2/manifest.ttl
 
 ../../dpf/utils/lv2_ttl_generator:
 	make -C ../../dpf utils/lv2_ttl_generator
+
+benchmark: ../../World/build/libworld.a ../../bin/benchmark
+
+../../bin/benchmark: $(OBJS_DSP) Benchmark.cpp
+	-@mkdir -p $(shell dirname $@)
+	@echo "Creating Benchmark standalone for $(NAME)"
+	$(CXX) $^ $(BUILD_CXX_FLAGS) $(LINK_FLAGS) -o $@
+
+
 
 .PHONY: ../../World/build/libworld.a
 
