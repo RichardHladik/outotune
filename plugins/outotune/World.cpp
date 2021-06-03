@@ -1,3 +1,4 @@
+#include <iostream>
 #include <algorithm>
 #include <memory>
 #include <string.h>
@@ -5,6 +6,7 @@
 #include "World.hpp"
 
 World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate), bufferSize(std::max((size_t)3 * 2048, _frameSize + 3 * fragmentLength)) {
+	std::cout << bufferSize << std::endl;
 	InitializeDioOption(&f0option);
 
 	// Calculated so that the fragments have lenght exactly fragmentLength ==
@@ -40,10 +42,11 @@ World::World(size_t _frameSize, float _rate) : frameSize(_frameSize), rate(_rate
 		// values at each frame is too expensive. The following is an
 		// approximation based on measuring the noise values of a sine wave.
 		for (size_t j = 0; j < n; j++)
-			noise[i][j] = i < 140 ? pow(i / 150, 4.5) : 0.7 + 0.3 * (i / n);
+			noise[i][j] = i < 140 ? pow((int)(i / 150), 4.5) : 0.7 + 0.3 * (int)(i / n);
 	}
 
 	offset = f0length - fragmentCount - 1;
+	estimate(); // do a warm-up
 }
 
 World::~World() {
