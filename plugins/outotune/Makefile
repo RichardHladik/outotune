@@ -61,10 +61,10 @@ BUILD_CXX_FLAGS += -std=c++17 -L../../World/build -lworld -I ../../World/src -g 
 
 EXTERNAL_DEPS = ../../World/build/libworld.a
 
-jack: $(EXTERNAL_DEPS)
-lv2_dsp: $(EXTERNAL_DEPS)
-lv2_sep: $(EXTERNAL_DEPS)
-vst: $(EXTERNAL_DEPS)
+../../bin/outotune: $(EXTERNAL_DEPS)
+../../bin/outotune.lv2/outotune_dsp.so: $(EXTERNAL_DEPS)
+../../bin/outotune.lv2/outotune_ui.so: $(EXTERNAL_DEPS)
+../../bin/outotune-vst.so: $(EXTERNAL_DEPS)
 
 all: $(TARGETS) ../../bin/outotune.lv2/manifest.ttl
 
