@@ -85,7 +85,7 @@ double World::estimate(void) {
 }
 
 void World::feed(const float *in, size_t frames) {
-	buffer_exchange(buffIn, frames, in);
+	buffer_feed(buffIn, frames, in);
 }
 
 const double *World::orig() const {

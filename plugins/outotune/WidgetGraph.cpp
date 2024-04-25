@@ -11,7 +11,7 @@ WidgetGraph::WidgetGraph(Widget *group, size_t _bufferSize, size_t _bufferCount)
 }
 
 void WidgetGraph::feedBuffer(size_t i, float x) {
-	buffer_exchange(bufs[i], x);
+	buffer_feed(bufs[i], x);
 }
 
 void WidgetGraph::onNanoDisplay() {
